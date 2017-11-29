@@ -1,5 +1,5 @@
 # PageBuilder - HTML assembly aid for ESP8266WebServer
-*An arduino library to create html string in the sketch for ESP8266WebServer.* [![Build Status]()]()
+*An arduino library to create html string in the sketch for ESP8266WebServer.* [![Build Status](https://travis-ci.org/Hieromon/PageBuilder.svg?branch=master)](https://travis-ci.org/Hieromon/PageBuilder)
 
 PageBuilder is an Arduino library class dedicated to the _ESP8266WebServer_ for easily generating HTML pages and sending them to client.
 
