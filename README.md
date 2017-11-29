@@ -156,7 +156,7 @@ PageBuilder Page2( "/page2", {header, body2, footer} );
 In order to successfully generate an HTML page using PageBuilder please understand the data structure of PageBuilder.  
 PageBuilder library consists of three objects that are related to each other as the below. `PageBuilder` inherits `RequestHandler` provided from ESP8266WebServer library and is invoked from `ESP8266WebServer` in response to http requests. PageBuilder owns its uri string and multiple PageElement objects.  
 Source strings of HTML are owned by `PageElement` (`mold` in the figure). Its string contains an identifier called a **token**. The **token** appears as `{{ }}` in the middle of the source HTML string (`_token` in the figure). The tokens are paired with functions to replace them with actual HTML sentences. When uri access has occurred server from the client, its paired function is invoked by extension of `handleClient()` method then the **token** will replace to actual statement to complete the HTML and sends it. `PageElement` can have multiple tokens (ie, it can define several tokens in one HTML source element).  
-![Data structure](data_structure.png)  
+![default_data_structure](https://user-images.githubusercontent.com/12591771/33360699-293dc5ac-d518-11e7-8d31-728d500f02bf.png)  
 To properly generate a web page, you need to code its function that replaces the token with HTML, and its function must return a String.  
 ```c++
 String AsName(PageArgument& args) {      // User coded function
@@ -266,6 +266,8 @@ PageElement::PageElement(const char* mold, TokenVT source);
 ```
 - `mold` : A pointer to HTML model string(const char array, PROGMEM available).
 - `source` : Container of processable token and handler function.
+
+## Methods
 
 ### PageBuilder Methods
 
