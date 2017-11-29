@@ -9,89 +9,12 @@ PageBuilder is an Arduino library class dedicated to the _ESP8266WebServer_ for 
 * No need for inline coding of URI access handler of ESP8266WebServer class
 * Fixed HTML statement parts like template can be allocated as PROGMEM
 * Arbitrary token can be specified inline HTML statement
-* Automatically sent to client for HTML page are generated
+* Automatically sent to client for HTML page are generated  
 
-
-<table>
-<th>Ordinary sketch</th><th>Sketch by PageBuilder</th>
-<tr><td>
-<pre><code class="language-c++">
-#include "ESP8266WebServer.h"
-ESP8266WebServer Server;
-
-// This is HTML structure, but imcompleted.
-static const char _ELEMENT_HELLO[] PROGMEM = {
-  "<html><head><style type=\"text/css\">p.foo { font-size:larger; }</style>"
-  "<body>hello, "
-};
-
-// This is complecated assemble process of HTML.
-void hello() {
-  String html = FPSTR(_ELEMENT_HELLO);
-  if (Server.hasArg("foo")) {
-    html += "<p class=\"foo\">";
-    html += Server.arg("foo");
-    html += "</p></body></html>";
-  }
-  else {
-    html += "<p>everybody!</p></body></html>";
-  }
-  Server.send(200, "text/html", html);
-}
-
-void setup() {
-  Server.on("/hello", hello);
-  Server.begin();
-}
-
-void loop() {
-  Server.handleClient();
-}
-</code></pre></td><td>
-<pre><code class="language-c++">
-#include "ESP8266WebServer.h"
-#include "PageBuilder.h"
-
-// This is HTML structure.
-static const char _ELEMENT_HELLO[] PROGMEM = {
-  "<html><head>"
-  "<style type=\"text/css\">p.foo {font-size:larger;}</style>"
-  "</head>"
-  "<body>hello, <p class=\"{{STYLE}}\">{{FOO}}</p></body>"
-  </html>"
-};
-
-// This is style section treatment.
-String style(PageArgument& args) {
-  return args.hasArg("foo") ?
-    String("foo") : String("");
-}
-
-// This is body section treatement.
-String echo(PageArgument& args) {
-  return args.hasArg("foo") ?
-    args.arg("foo") : String("everybody");
-}
-
-// A PageBuilder object can have multiple elements,
-// and each element has an HTML structure.
-PageElement HELLO_PAGE_CONTENT(_ELEMENT_HELLO, {
-  {"STYLE", style}, 
-  {"FOO", echo}
- });
-PageBuilder HelloPage("/hello", {HELLO_PAGE_CONTENT});
-ESP8266WebServer Server;
-
-void setup() {
-  HelloPage.insert(Server);
-  Server.begin();
-}
-
-void loop() {
-  Server.handleClient();
-}
-</code></pre></td></tr>
-</table>  
+Ordinary sketch | Skecth by PageBuilder  
+----------------|----------------------  
+![ordinary_sketch](https://user-images.githubusercontent.com/12591771/33361508-cfad0c2e-d51b-11e7-873d-a401dc7decd9.png) | ![pagebuilder_sketch](https://user-images.githubusercontent.com/12591771/33361523-dc7e30cc-d51b-11e7-83a5-5f27bef0b71b.png)
+  
 
 ## Works on
 
