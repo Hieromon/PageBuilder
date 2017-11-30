@@ -145,22 +145,22 @@ PageElement element("hello {{NAME}}.", {{"NAME", func}});
 ```
 An argument can be accessed with the following method of `PageArgument` class.
 
-#### `String arg(String name)`  
+#### `String PageElement::arg(String name)`  
 Returns the value of the parameter specified by `name`.
 
-#### `String arg(int i)`  
+#### `String PageElement::arg(int i)`  
 Returns the value of the parameter indexed `i`.
 
-#### `String argName(int i)`  
+#### `String PageElement::argName(int i)`  
 Retuens parameter name of indexed i.
 
-#### `int args()`  
+#### `int PageElement::args()`  
 Get parameters count of the current http request.
 
-#### `size_t size()`  
+#### `size_t PageElement::size()`  
 Same as `args()`.
 
-#### `bool hasArg(String name)`  
+#### `bool PageElement::hasArg(String name)`  
 Returns whether the `name` parameter is specified in the current http request.
 
 ## Declare PageBuilder object and PageElement object
@@ -177,7 +177,12 @@ PageBuilder::PageBuilder();
 PageBuilder::PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY);
 PageBuilder::PageBuilder(const char* uri, PageElementVT element, HTTPMethod method = HTTP_ANY);
 ```
-- `element` : **PageElement** container wrapper.
+- `element` : **PageElement** container wrapper. Normally, use the brackets to specify initializer.  
+  ```c++
+  PageElement elem1();
+  PageElement elem2();
+  PageBuilder page("/", {elem1, elem2});
+  ```
 - `method` : Enum value of HTTP method as `HTTP_ANY`, `HTTP_GET`, `HTTP_POST` that page should respond.
 - `uri` : uri string of the page.
 
@@ -188,36 +193,41 @@ PageElement::PageElement(const char* mold);
 PageElement::PageElement(const char* mold, TokenVT source);
 ```
 - `mold` : A pointer to HTML model string(const char array, PROGMEM available).
-- `source` : Container of processable token and handler function.
+- `source` : Container of processable token and handler function. A **TokenVT** type is std::vector to the structure with the pair of *token* and *func*. It prepares with an initializer.  
+  ```c++
+  String func1(PageArgument& args);
+  String func2(PageArgument& args);
+  PageElement elem(html, {{"TOKEN1", func1}, {"TOKEN2", func2}});
+  ```
 
 ## Methods
 
 ### PageBuilder Methods
 
-#### `void addElement(PageElement& element)`  
+#### `void PageBuilder::addElement(PageElement& element)`  
 Add a new **PageElement object** to the container of **PageBuilder**. 
 - `element` : PageElement object.
 
-#### `String build(void)`
+#### `String PageBuilder::build(void)`
 Returns the built html string from `const char* mold` that processed *token* by the user *function* of **TokenVT** which code as `{"token",function_name}`. The `build` method handles all *PageElement* objects that a *PageBuilder* contained.
 
-#### `void insert(ESP8266WebServer& server)`  
+#### `void PageBuilder::insert(ESP8266WebServer& server)`  
 Register the page and starts handling. It has the same effect as `on` method of `ESP8266WebServer`.
 - `server` : A reference of ESP8266WebServer object to register the page.
 
-#### `void setUri(const char* uri)`  
+#### `void PageBuilder::setUri(const char* uri)`  
 Set uri of this page.
 - `uri` : A pointer of uri string.
 
-#### `const char* uri()`  
+#### `const char* PageBuilder::uri()`  
 Get uri of this page.
 
 ### PageElement methods
 
-#### `const char* mold()`  
+#### `const char* PageElement::mold()`  
 Get mold string in the PageElement.
 
-#### `String build()`  
+#### `String PageElement::build()`  
 Returns the HTML element string from `const char* mold` that processed *token* by the user *function* of **TokenVT**.
 
 License
