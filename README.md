@@ -208,6 +208,11 @@ PageElement::PageElement(const char* mold, TokenVT source);
 Add a new **PageElement object** to the container of **PageBuilder**. 
 - `element` : PageElement object.
 
+#### `void PageBuilder::atNotFound(ESP8266WebServer& server)`  
+Register **the not found page** to the ESP8266WebServer. It has the same effect as `onNotFound` method of `ESP8266WebServer`. The page registered by `atNotFound` method is response with http code 404.  
+Note that only the most recently registered PageBuilder object is valid.  
+- `server` : A reference of ESP8266WebServer object to register the page.
+
 #### `String PageBuilder::build(void)`
 Returns the built html string from `const char* mold` that processed *token* by the user *function* of **TokenVT** which code as `{"token",function_name}`. The `build` method handles all *PageElement* objects that a *PageBuilder* contained.
 
@@ -230,7 +235,16 @@ Get mold string in the PageElement.
 #### `String PageElement::build()`  
 Returns the HTML element string from `const char* mold` that processed *token* by the user *function* of **TokenVT**.
 
-License
------------
+
+## Change log
+
+#### [0.91] 2017-12-01
+- Supports **atNotFound** method in PageBuilder class.
+
+#### [0.9] 2017-11-29
+- Release candidate.
+
+## License
+
 The PseudoPWM class is licensed under the [MIT License](LICENSE.md).  
 Copyright &copy; 2017 hieromon@gmail.com

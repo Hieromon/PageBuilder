@@ -108,17 +108,19 @@ typedef std::vector<std::reference_wrapper<PageElement>>	PageElementVT;
  */
 class PageBuilder : public RequestHandler {
 public:
-	PageBuilder() : _uri(nullptr), _method(HTTP_ANY) {}
+	PageBuilder() : _uri(nullptr), _method(HTTP_ANY), _server(nullptr) {}
 	PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true) :
 		_uri(nullptr),
 		_element(element),
 		_method(method),
-		_noCache(noCache) {}
+		_noCache(noCache),
+		_server(nullptr) {}
 	PageBuilder(const char* uri, PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true) :
 		_uri(uri),
 		_element(element),
 		_method(method),
-		_noCache(noCache) {}
+		_noCache(noCache),
+		_server(nullptr) {}
 
 	~PageBuilder() { _element.clear(); }
 
@@ -133,6 +135,8 @@ public:
 	static void sendNocacheHeader(ESP8266WebServer& server);
 	String build(void);
 	String build(PageArgument& args);
+	void atNotFound(ESP8266WebServer& server);
+	void exit404(void);
 
 protected:
 	const char*		_uri;			/**< uri of this page */
@@ -140,7 +144,10 @@ protected:
 	HTTPMethod		_method;		/**< Method of http request to which this page applies. */
 
 private:
+	bool _sink(int code, ESP8266WebServer& server); //, HTTPMethod requestMethod, String requestUri);
+
 	bool	_noCache;		/**< A flag for must-revalidate cache control response */
+	ESP8266WebServer*	_server;
 };
 
 #endif

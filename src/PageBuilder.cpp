@@ -70,11 +70,7 @@ bool PageBuilder::canUpload(String requestUri) {
  *	@retval	true	A response send.
  *	@retval false	This request could not handled.
  */
-bool PageBuilder::handle(ESP8266WebServer& server, HTTPMethod requestMethod, String requestUri) {
-	// Screening the available request
-	if (!canHandle(requestMethod, requestUri))
-		return false;
-
+bool PageBuilder::_sink(int code, ESP8266WebServer& server) { //, HTTPMethod requestMethod, String requestUri) {
 	// Retrieve request arguments
 	PageArgument args;
 	for (uint8_t i = 0; i < server.args(); i++)
@@ -89,8 +85,29 @@ bool PageBuilder::handle(ESP8266WebServer& server, HTTPMethod requestMethod, Str
 
 	// send http content to client
 	server.setContentLength(content.length());
-	server.send(200, "text/html", content);
+	server.send(code, "text/html", content);
 	return true;
+}
+
+bool PageBuilder::handle(ESP8266WebServer& server, HTTPMethod requestMethod, String requestUri) {
+	// Screening the available request
+	if (!canHandle(requestMethod, requestUri))
+		return false;
+
+	// Throw with 200 response
+	return _sink(200, server);
+}
+
+/**
+ *  Send a 404 response.
+ */
+void PageBuilder::exit404(void) {
+	if (_server != nullptr) {
+		_noCache = true;
+
+		// Throw with 404 response
+		_sink(404, *_server);
+	}
 }
 
 /**
@@ -100,6 +117,15 @@ bool PageBuilder::handle(ESP8266WebServer& server, HTTPMethod requestMethod, Str
 void PageBuilder::sendNocacheHeader(ESP8266WebServer& server) {
 	for (uint8_t i = 0; i < sizeof(_HttpHeaderNocache) / sizeof(HTTPHeaderS); i++)
 		server.sendHeader(_HttpHeaderNocache[i]._field, _HttpHeaderNocache[i]._directives);
+}
+
+/**
+ *  Register the not found page to ESP8266Server.
+ `  @param  server	A reference of ESP8266WebServer.
+ */
+void PageBuilder::atNotFound(ESP8266WebServer& server) {
+	_server = &server;
+	server.onNotFound(std::bind(&PageBuilder::exit404, this));
 }
 
 /**
