@@ -1,23 +1,23 @@
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
-PageArgument KEYWORD1
-PageBuilder  KEYWORD1
-PageElement  KEYWORD1
+PageArgument	KEYWORD1
+PageBuilder	KEYWORD1
+PageElement	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-addElement KEYWORD2
-arg        KEYWORD2
-argName    KEYWORD2
-args       KEYWORD2
-build      KEYWORD2
-insert     KEYWORD2
-hasArg     KEYWORD2
-mold       KEYWORD2
-push       KEYWORD2
-setUri     KEYWORD2
-size       KEYWORD2
-source     KEYWORD2
-uri        KEYWORD2
+addElement	KEYWORD2
+arg	KEYWORD2
+argName	KEYWORD2
+args	KEYWORD2
+build	KEYWORD2
+insert	KEYWORD2
+hasArg	KEYWORD2
+mold	KEYWORD2
+push	KEYWORD2
+setUri	KEYWORD2
+size	KEYWORD2
+source	KEYWORD2
+uri	KEYWORD2
