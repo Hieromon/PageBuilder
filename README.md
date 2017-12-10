@@ -145,22 +145,22 @@ PageElement element("hello {{NAME}}.", {{"NAME", func}});
 ```
 An argument can be accessed with the following method of `PageArgument` class.
 
-#### `String PageElement::arg(String name)`  
+#### `String PageArgument::arg(String name)`  
 Returns the value of the parameter specified by `name`.
 
-#### `String PageElement::arg(int i)`  
+#### `String PageArgument::arg(int i)`  
 Returns the value of the parameter indexed `i`.
 
-#### `String PageElement::argName(int i)`  
+#### `String PageArgument::argName(int i)`  
 Retuens parameter name of indexed i.
 
-#### `int PageElement::args()`  
+#### `int PageArgument::args()`  
 Get parameters count of the current http request.
 
-#### `size_t PageElement::size()`  
+#### `size_t PageArgument::size()`  
 Same as `args()`.
 
-#### `bool PageElement::hasArg(String name)`  
+#### `bool PageArgument::hasArg(String name)`  
 Returns whether the `name` parameter is specified in the current http request.
 
 ## Declare PageBuilder object and PageElement object
