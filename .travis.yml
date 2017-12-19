@@ -1,3 +1,6 @@
+sudo: required
+dist: trusty
+group: deprecated-2017Q4
 language: c
 env:
   - BD=esp8266:esp8266:nodemcuv2:CpuFrequency=160,FlashSize=4M3M
