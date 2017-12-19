@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome to {{SSID}}</title>
+<style type="text/css">
+body {
+  font-family:'Arial',sans-serif;
+}
+h4 {
+  padding: 0.5em;
+  color: #010101;
+  background: #798da8;
+  border-bottom: solid 3px #516ab6;
+  text-align: center;
+}
+dl, dt, dd {
+  margin: 0;
+  padding: 0;
+}
+dl {
+  font-family: 'Arial',sans-serif;
+  font-weight: bold;
+  text-align: left;
+}
+dt, dd {
+  border-top: solid 2px white;
+  padding: 3px;
+}
+dt {
+  clear: left;
+  float: left;
+  background-color: #ddd;
+  margin-left: 0.5em;
+  margin-right: 0.5em;
+  padding-left: 1.0em;
+  width: 40%;
+}
+</style>
+</head>
+<body>
+<h4>{{ESP8266AP}} joined <span style="color:red;">{{SSID}}</span> connected.</h4>
+<dl>
+  <dt>IP:</dt><dd>{{IP}}</dd>
+  <dt>Gateway:</dt><dd>{{GATEWAY}}</dd>
+  <dt>Subnet mask:</dt><dd>{{SUBNET}}</dd>
+</dl>
+</body>
+</html>

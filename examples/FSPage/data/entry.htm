@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
+<title>ESP8266 WiFi Join</title>
+<style type="text/css">
+body {
+  font-family:'Arial',sans-serif;
+}
+.form-style {
+  max-width: 400px;
+  margin: 10px auto;
+  padding: 16px;
+}
+.form-style h1{
+  background: #006778;
+  border-radius:4px;
+  padding: 16px 0;
+  font-size: 140%;
+  font-weight: 300;
+  text-align: center;
+  text-shadow:0px 1px 0px #002778;
+  color: #fff;
+  margin: -16px -16px 16px -16px;
+}
+.form-style input[type="text"],
+.form-style textarea,
+.form-style select 
+{
+  -webkit-transition: all 0.30s ease-in-out;
+  -moz-transition: all 0.30s ease-in-out;
+  -ms-transition: all 0.30s ease-in-out;
+  outline: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  width: 100%;
+  background: #fff;
+  margin-bottom: 4%;
+  border: 1px solid #ccc;
+  padding: 3%;
+  color: #555;
+  font-size: 100%;
+}
+.form-style input[type="text"]:focus,
+.form-style textarea:focus,
+.form-style select:focus
+{
+  box-shadow: 0 0 5px #276873;
+  padding: 3%;
+  border: 2px solid #276873;
+}
+.form-style input[type="submit"]
+{
+  background-color: #e4685d;
+  border: none;
+  box-shadow: 0 1px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+  -moz-border-radius:4px;
+  -webkit-border-radius:4px;
+  border-radius:4px;
+  color: white;
+  padding: 10px 30px;
+  text-decoration: none;
+  display: block;
+  font-size: 120%;
+  margin-top:24px;
+}
+.form-style input[type="submit"]:active
+{
+  position:relative;
+  top:2px;
+  box-shadow: 0 0 0 0 rgba(0,0,0,0.2), 0 0 0 0 rgba(0,0,0,0.19);
+}
+</style>
+</head>
+<body>
+<div class="form-style">
+<h1>Connect to {{ENTRY}}</h1>
+<form action="{{URI_REQ}}" method="post">
+<input type="text" name="ssid" {{SSID}} />
+{{PSK}}
+<input type="submit" value="Apply" />
+</form>
+</div>
+</body>
+</html>

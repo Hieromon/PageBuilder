@@ -8,6 +8,7 @@ PageBuilder is an Arduino library class dedicated to the _ESP8266WebServer_ for 
 * Ability to completely separate HTML structure and the web page generation logic in the sketch
 * No need for inline coding of URI access handler of ESP8266WebServer class
 * Fixed HTML statement parts like template can be allocated as PROGMEM
+* Its HTML source can be stored SPIFFS and obtain automatically
 * Arbitrary token can be specified inline HTML statement
 * Automatically sent to client for HTML page are generated  
 
@@ -22,7 +23,7 @@ Generic esp8266 module and other representatives works fine. ESP8266 Arduino cor
 
 ## Installation
 
-Download this file as a zip, and extract the resulting folder into your Arduino Libraries folder. See ![Installing Additional Arduino Libraries](https://www.arduino.cc/en/Guide/Libraries).  
+Download this file as a zip, and extract the resulting folder into your Arduino Libraries folder. See [Installing Additional Arduino Libraries](https://www.arduino.cc/en/Guide/Libraries).  
 Required [Arduino IDE](http://www.arduino.cc/en/main/software) is current upstream at **the 1.8 level or later**, and also [ESP8266 Arduino core 2.3.0](https://github.com/esp8266/Arduino).
 
 ## Example
@@ -71,6 +72,12 @@ PageElement footer( _FOOT );
 PageBuilder Page1( "/page1", {header, body1, footer} );
 PageBuilder Page2( "/page2", {header, body2, footer} );
 ```
+- HTML source stored in SPIFFS.  
+
+The following screenshot is an example PageBuilder sketch using HTML source stored in SPIFFS. It scan the nearby signal and connect the ESP8266 to the specified access point.  
+This case is [FSPage.ino example sketch](examples/FSPage/README.md) in this repository.
+
+<kbd>![Join to WiFi](https://user-images.githubusercontent.com/12591771/34141214-14cb8cfc-e4c3-11e7-8afd-90efbdd6ac87.png "Join to WiFi")</kbd> <kbd>![Connect to WiFi](https://user-images.githubusercontent.com/12591771/34141303-aba4b284-e4c3-11e7-872b-69b9301cef10.png "Connect to WiFi")</kbd> <kbd>![Welcome](https://user-images.githubusercontent.com/12591771/34141320-cf390af6-e4c3-11e7-9bbd-44d7f80aa076.png "Welcome")</kbd>  
 
 ## Usage
 
@@ -132,8 +139,9 @@ server.handleClient();  // Invoke from this.
 
 ### Arguments of invked user function
 
-Arguments are passed to the **function** that should be implemented corresponding to tokens. It is the parameter value as GET or POST at the http request occurred like as `url?param=value`, and its parameters are stored in `PageArgument` object and passed to the function as below.  
+Arguments are passed to the **function** that should be implemented corresponding to tokens. It is the parameter value as GET or POST at the http request occurred like as `url?param=value` in HTTP GET, and its parameters are stored in `PageArgument` object and passed to the function as below.  
 - HTTP GET with `http://xxx.xxx.xxx/?param=value`  
+- HTTP POST with `/ HTTP/1.1 Host:xxx.xxx.xxx Connection:keep-alive param=value`
 
 ```c++
 String func(PageArgument& args) {
@@ -199,6 +207,14 @@ PageElement::PageElement(const char* mold, TokenVT source);
   String func2(PageArgument& args);
   PageElement elem(html, {{"TOKEN1", func1}, {"TOKEN2", func2}});
   ```
+  `mold` can also use external files placed on SPIFFS. Since HTML consists of more strings, the program area may be smaller in sketches using many pages.  
+  External files can have HTML source specified by `mold`. That file would be allocated on the SPIFFS file system. This allows you to reduce the sketch size and assign more capacity to the program.  
+  You can specify the HTML source file name by `mold` parameter in the following format.  
+  ```
+  file:FILE_NAME
+  ```
+  `FILE_NAME` is the name of the HTML source file containing `/`. If prefix **file:** is specified in `mold` parameter, the PageElement class reads its file from SPIFFS as HTML source. A sample sketch using this way is an example as [FSPage.ino](examples/FSPage/README.md).  
+  For details for how to write HTML source file to SPIFFS of ESP8266, please refer to [Uploading files to file system](https://arduino-esp8266.readthedocs.io/en/latest/filesystem.html#uploading-files-to-file-system).
 
 ## Methods
 
@@ -237,6 +253,12 @@ Returns the HTML element string from `const char* mold` that processed *token* b
 
 
 ## Change log
+
+#### [0.93] 2017-12-19
+- Supports external file on SPIFFS for PageElement as HTML source data.
+
+#### [0.92] 2017-12-07
+- A minor fixes.
 
 #### [0.91] 2017-12-01
 - Supports **atNotFound** method in PageBuilder class.

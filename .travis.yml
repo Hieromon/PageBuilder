@@ -18,6 +18,7 @@ install:
 script:
  - arduino --verify --board $BD $PWD/examples/WebLED/WebLED.ino
  - arduino --verify --board $BD $PWD/examples/WebPageHello/WebPageHello.ino
+ - arduino --verify --board $BD $PWD/examples/FSPage/FSPage.ino
 
 notifications:
   email:

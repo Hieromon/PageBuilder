@@ -22,6 +22,8 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 
+#define PAGEELEMENT_FILE	"file:"
+
 /** HTTP get or post method argument pair structure. */
 typedef struct _RequestArgumentS {
 	String	_key;		/**< Parameter name */

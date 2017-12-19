@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
+  <title>ESP8266 WiFi Join</title>
+  <style type="text/css">
+  body {
+    font-family:'Arial',sans-serif;
+    font-weight:bold;
+    margin-left: 20px;
+  }
+  .link_button {
+  background-color: #e4685d;
+  border: none;
+  box-shadow: 0 1px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+  -moz-border-radius:4px;
+  -webkit-border-radius:4px;
+  border-radius:4px;
+  color: white;
+  padding: 10px 30px;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 120%;
+  margin-top:24px;
+}
+.link_button:active {
+  position:relative;
+  top:2px;
+  box-shadow: 0 0 0 0 rgba(0,0,0,0.2), 0 0 0 0 rgba(0,0,0,0.19);
+}
+.ssid_list {
+    line-height: 36px;
+    margin-bottom: 12px;
+    vertical-align: middle;
+  }
+  .ssid_list > a {
+    width: 200px;
+    display: inline-block;
+    position: relative;
+    padding: 0.25em 1.0em;
+    margin-right: 1.0em;
+    text-align: center;
+    text-decoration: none;
+    color: #FFF;
+    background-color: #006778;
+    background-image: -webkit-linear-gradient(top, #0087b0, #006778);
+    background-image: linear-gradient(to bottom, #0087b0, #006778);
+    border-bottom: solid 3px #004462;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 3px 2px rgba(0, 0, 0, 0.19);
+  }
+  .ssid_list > a:active {
+    border-bottom: solid 3px #006778;
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.2);
+  }
+  .img_lock {
+    display: inline-block;
+    width: 32px;
+    height:32px;
+    margin-left: 0.5em;
+    vertical-align: middle;
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAACZElEQVRYhe2VTUhUURTHf2emSaiNUi4KtKACTQgcJ8rJpC+CIMiF9uGmVViCU9kHRC3cRFCQqWiFEgR9QW2KVi1KKsescYRo1RdFSwuNCLNp3mkxd8DCeXNt5uGmPxzefeede87vnXvvezDLkplOqOl5WeQkEg0iBFW0BEBUPqkS9wUCt582rxrzBGBD+0jhT3/yLLAXYRSVh6AfTZoliG5CKQauzk36j/cfrhzPG0D4QrwWn3ML+KIqxwbHgg9oE+ePoDb1VRfFt4roOWABjm939FDwcc4A6zpiG1W4D1ycLODEcFMokX62vjNeDPAkEhxN+6ouxwIFk5wBDoiyfeBg6JFb/jnZABxkpQjt0ZaqUwBr20eW+vzJk0B9EqcQINwZGwfuOEn/6WdNlR+Ao+Gu4R8qWg64AsxoE1Z3vtgD0iswpMIlfDKSotRKUfYrrAHdNxhZfdM2pzVAdffwcknqK4TWaEuoZ7qYcFesGeU8UBGNhN7Z5rZWTUesdMptOdAA7AIq0s7a7ucleS/8l8qBIUCBr8C4GQ+ZZ56qHpgArptiYmyF8U0AO70qvhgYA1pdYo6YmEVeANwgdaTcNq4A/cC1fBcPAN+BRovYRuAbFt+YmaiU1EYrs4gtM7FWp8FnCTDPXD9bxKZj5lvmdlUfqbfJxfrcCmTrgP47u51sl2DWALJ14L0xzwAyKQHsAJYZqwN+eQGQqQNXgHtT7u8aX94BMum1pS9ngEwd2DKNb7MXAJm0jdS6p1VnfHkHcDsFCzOM8wrgubL9sdw60GssJ/3/FGdbgrfAQI413uQ431v9Bn8ZuSAzPe5xAAAAAElFTkSuQmCC) no-repeat;
+  }
+</style>
+</head>
+<body>
+<h2>Join to WiFi AP</h2>
+{{SSID_LIST}}
+<p><a href="{{URI_ROOT}}" class="link_button">Rescan</a></p>
+</body>
+</html>
