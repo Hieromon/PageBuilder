@@ -39,48 +39,6 @@ String  CURRENT_HOST;
 #define URI_WELCOME "/welcome"
 #define URI_FAILED  "/failed"
 
-// HTML page declarations.
-// root page
-PageElement SSID_ELM("file:/root.htm", {
-  { "SSID_LIST", listSSID },
-  { "URI_ROOT", [](PageArgument& args) { return URI_ROOT; }}
-});
-PageBuilder SSID_PAGE(URI_ROOT, { SSID_ELM });
-
-// SSID & Password entry page
-PageElement ENTRY_ELM("file:/entry.htm", {
-  { "ENTRY", [](PageArgument& args) { CONN_SSID = args.arg("ssid"); return "AP"; } },
-  { "URI_REQ", [](PageArgument& args) { return URI_REQ; } },
-  { "SSID", [](PageArgument& args) { return CONN_SSID == "?" ? "placeholder=\"SSID\"" : String("value=\"" + CONN_SSID + "\" readonly"); } },
-  { "PSK", [](PageArgument& args) { return args.arg("psk_type") != "7" ? "<input type=\"text\" name=\"psk\" placeholder=\"Password\" />" : ""; } }
-});
-PageBuilder ENTRY_PAGE(URI_JOIN, {ENTRY_ELM});
-
-// Connection request redirector
-PageElement REQ_ELM("{{REQ}}", { {"REQ", reqConnect} });
-PageBuilder REQ_PAGE(URI_REQ, {REQ_ELM});
-
-// Connection result redirector
-PageElement CONNRES_ELM("{{CONN}}", { {"CONN", resConnect} });
-PageBuilder CONNRES_PAGE(URI_RESULT, {CONNRES_ELM});
-
-// Connection successful page
-PageElement WELCOME_ELM("file:/connect.htm", {
-  { "ESP8266AP", [](PageArgument& args) { return AP_NAME; } },
-  { "SSID", [](PageArgument& args) { return WiFi.SSID(); } },
-  { "IP", [](PageArgument& args) { return WiFi.localIP().toString(); } },
-  { "GATEWAY", [](PageArgument& args) { return WiFi.gatewayIP().toString(); } },
-  { "SUBNET", [](PageArgument& args) { return  WiFi.subnetMask().toString(); } }
-});
-PageBuilder WELCOME_PAGE(URI_WELCOME, {WELCOME_ELM});
-
-// Connection failed page
-PageElement FAILED_ELM("file:/failed.htm", {
-  { "SSID", [](PageArgument& args) { return CONN_SSID; } },
-  { "RESULT", [](PageArgument& args) { return String(WiFi.status()); } }
-});
-PageBuilder FAILED_PAGE(URI_FAILED, {FAILED_ELM});
-
 // This callback function would be invoked from the root page and scans nearby
 // WiFi-AP to make a connectable list.
 String listSSID(PageArgument& args) {
@@ -212,6 +170,48 @@ void broadcastEvent(WiFiEvent_t event) {
   if (eventText)
     Serial.println(String("[event] ") + String(FPSTR(eventText)));
 }
+
+// HTML page declarations.
+// root page
+PageElement SSID_ELM("file:/root.htm", {
+  { "SSID_LIST", listSSID },
+  { "URI_ROOT", [](PageArgument& args) { return URI_ROOT; }}
+});
+PageBuilder SSID_PAGE(URI_ROOT, { SSID_ELM });
+
+// SSID & Password entry page
+PageElement ENTRY_ELM("file:/entry.htm", {
+  { "ENTRY", [](PageArgument& args) { CONN_SSID = args.arg("ssid"); return "AP"; } },
+  { "URI_REQ", [](PageArgument& args) { return URI_REQ; } },
+  { "SSID", [](PageArgument& args) { return CONN_SSID == "?" ? "placeholder=\"SSID\"" : String("value=\"" + CONN_SSID + "\" readonly"); } },
+  { "PSK", [](PageArgument& args) { return args.arg("psk_type") != "7" ? "<input type=\"text\" name=\"psk\" placeholder=\"Password\" />" : ""; } }
+});
+PageBuilder ENTRY_PAGE(URI_JOIN, {ENTRY_ELM});
+
+// Connection request redirector
+PageElement REQ_ELM("{{REQ}}", { {"REQ", reqConnect} });
+PageBuilder REQ_PAGE(URI_REQ, {REQ_ELM});
+
+// Connection result redirector
+PageElement CONNRES_ELM("{{CONN}}", { {"CONN", resConnect} });
+PageBuilder CONNRES_PAGE(URI_RESULT, {CONNRES_ELM});
+
+// Connection successful page
+PageElement WELCOME_ELM("file:/connect.htm", {
+  { "ESP8266AP", [](PageArgument& args) { return AP_NAME; } },
+  { "SSID", [](PageArgument& args) { return WiFi.SSID(); } },
+  { "IP", [](PageArgument& args) { return WiFi.localIP().toString(); } },
+  { "GATEWAY", [](PageArgument& args) { return WiFi.gatewayIP().toString(); } },
+  { "SUBNET", [](PageArgument& args) { return  WiFi.subnetMask().toString(); } }
+});
+PageBuilder WELCOME_PAGE(URI_WELCOME, {WELCOME_ELM});
+
+// Connection failed page
+PageElement FAILED_ELM("file:/failed.htm", {
+  { "SSID", [](PageArgument& args) { return CONN_SSID; } },
+  { "RESULT", [](PageArgument& args) { return String(WiFi.status()); } }
+});
+PageBuilder FAILED_PAGE(URI_FAILED, {FAILED_ELM});
 
 void setup() {
   delay(1000);
