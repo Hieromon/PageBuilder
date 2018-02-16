@@ -221,7 +221,7 @@ PageElement::PageElement(const char* mold, TokenVT source);
 ### PageBuilder Methods
 
 #### `void PageBuilder::addElement(PageElement& element)`  
-Add a new **PageElement object** to the container of **PageBuilder**. 
+Add a new **PageElement** object to the container of **PageBuilder**. 
 - `element` : PageElement object.
 
 #### `void PageBuilder::atNotFound(ESP8266WebServer& server)`  
@@ -231,6 +231,15 @@ Note that only the most recently registered PageBuilder object is valid.
 
 #### `String PageBuilder::build(void)`
 Returns the built html string from `const char* mold` that processed *token* by the user *function* of **TokenVT** which code as `{"token",function_name}`. The `build` method handles all *PageElement* objects that a *PageBuilder* contained.
+
+#### `void PageBuilder::cancel()`  
+Notify to **PageBuilder** that the generated HTML string should not be send. 
+
+#### `void PageBuilder::clearElement()`  
+Clear enrolled **PageElement** objects in the **PageBuilder**.
+
+#### `void PageBuilder::exitCanHandle(PrepareFuncT prepareFunc)`  
+- `prepareFunc` :
 
 #### `void PageBuilder::insert(ESP8266WebServer& server)`  
 Register the page and starts handling. It has the same effect as `on` method of `ESP8266WebServer`.
@@ -251,8 +260,23 @@ Get mold string in the PageElement.
 #### `String PageElement::build()`  
 Returns the HTML element string from `const char* mold` that processed *token* by the user *function* of **TokenVT**.
 
+#### `void PageElement::setMold(const char* mold)`  
+Sets the source HTML element string.
+
+#### `void PageElement::addToken(String token, HandleFuncT handler)`  
+Add the source HTML element string.
+
+## Application hints
+
+A usual way, the sketch needs to statically prepare the PageElement object for each element of the web page. But assigning the web contents constructed by multi-page with `static const char*` (including PROGMEM) strangles the heap area.  
+By using **setMold** and **addToken** method of the PegeElement class, the sketch can construct the multiple pages of web content with just one PageBuilder object and a PageElement object.
 
 ## Change log
+
+#### [1.0.0] 2018-02-17
+- Supports **cancel** method in PageBuilder class.
+- Supports **setMold** method in PageElement class.
+- Supports **addToken** method in PageElement class.
 
 #### [0.93] 2017-12-19
 - Supports external file on SPIFFS for PageElement as HTML source data.
@@ -269,4 +293,4 @@ Returns the HTML element string from `const char* mold` that processed *token* b
 ## License
 
 The PseudoPWM class is licensed under the [MIT License](LICENSE.md).  
-Copyright &copy; 2017 hieromon@gmail.com
+Copyright &copy; 2018 hieromon@gmail.com

@@ -9,15 +9,21 @@ PageElement	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 addElement	KEYWORD2
+addToken	KEYWORD2
 arg	KEYWORD2
 argName	KEYWORD2
 args	KEYWORD2
 atNotFound	KEYWORD2
 build	KEYWORD2
+cancel	KEYWORD2
+clearElement	KEYWORD2
+exit404	KEYWORD2
+exitCanHandle	KEYWORD2
 insert	KEYWORD2
 hasArg	KEYWORD2
 mold	KEYWORD2
 push	KEYWORD2
+setMold	KEYWORD2
 setUri	KEYWORD2
 size	KEYWORD2
 source	KEYWORD2

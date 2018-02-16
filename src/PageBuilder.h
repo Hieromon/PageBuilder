@@ -2,8 +2,8 @@
  *	Declaration of PaguBuilder class and accompanying PageElement, PageArgument class.
  *	@file	PageBuilder.h
  *	@author	hieromon@gmail.com
- *	@version	1.0
- *	@date	2017-11-15
+ *	@version	1.0.0
+ *	@date	2018-01-17
  *	@copyright	MIT license.
  */
 
@@ -84,12 +84,14 @@ public:
 	PageElement() : _mold(nullptr) {}
 	PageElement(const char* mold) : _mold(mold), _source(std::vector<TokenSourceST>()) {}
 	PageElement(const char* mold, TokenVT source) : _mold(mold), _source(source) {}
-	~PageElement() { _source.clear(); }
+	~PageElement();
 
 	const char*		mold() { return _mold; }
 	TokenVT			source() { return _source; }
 	String			build();
 	static String	build(const char* mold, TokenVT tokenSource, PageArgument& args);
+	void			setMold(const char* mold) { _mold = mold; }
+	void			addToken(String token, HandleFuncT handler);
 
 protected:
 	const char*	_mold;		//*< A pointer to HTML model string(char array). */
@@ -101,6 +103,9 @@ protected:
  *	page as a reference container as std::reference_wrapper.*/
 typedef std::vector<std::reference_wrapper<PageElement>>	PageElementVT;
 
+/** The user own function for the current uri handling preparation. */
+typedef std::function<bool(HTTPMethod, String)>	PrepareFuncT;
+
 /**
  *	PageBuilder class is to make easy to assemble and output html stream 
  *	of web page. The page builder class includes the uri of the page, 
@@ -111,20 +116,24 @@ typedef std::vector<std::reference_wrapper<PageElement>>	PageElementVT;
 class PageBuilder : public RequestHandler {
 public:
 	PageBuilder() : _uri(nullptr), _method(HTTP_ANY), _server(nullptr) {}
-	PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true) :
+	PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false) :
 		_uri(nullptr),
 		_element(element),
 		_method(method),
 		_noCache(noCache),
-		_server(nullptr) {}
-	PageBuilder(const char* uri, PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true) :
+		_cancel(cancel),
+		_server(nullptr),
+		_canHandle(nullptr) {}
+	PageBuilder(const char* uri, PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false) :
 		_uri(uri),
 		_element(element),
 		_method(method),
 		_noCache(noCache),
-		_server(nullptr) {}
+		_cancel(cancel),
+		_server(nullptr),
+		_canHandle(nullptr) {}
 
-	~PageBuilder() { _element.clear(); }
+	~PageBuilder() { _uri = nullptr; _server = nullptr; clearElement(); }
 
 	bool canHandle(HTTPMethod requestMethod, String requestUri) override;
 	bool canUpload(String requestUri) override;
@@ -134,11 +143,14 @@ public:
 	const char*	uri() { return _uri; }
 	void insert(ESP8266WebServer& server) { server.addHandler(this); }
 	void addElement(PageElement& element) { _element.push_back(element); }
+	void clearElement();
 	static void sendNocacheHeader(ESP8266WebServer& server);
 	String build(void);
 	String build(PageArgument& args);
 	void atNotFound(ESP8266WebServer& server);
 	void exit404(void);
+	void exitCanHandle(PrepareFuncT prepareFunc) { _canHandle = prepareFunc; }
+	void cancel() { _cancel = true; }
 
 protected:
 	const char*		_uri;			/**< uri of this page */
@@ -146,10 +158,11 @@ protected:
 	HTTPMethod		_method;		/**< Method of http request to which this page applies. */
 
 private:
-	bool _sink(int code, ESP8266WebServer& server); //, HTTPMethod requestMethod, String requestUri);
-
+	bool	_sink(int code, ESP8266WebServer& server); //, HTTPMethod requestMethod, String requestUri);
 	bool	_noCache;		/**< A flag for must-revalidate cache control response */
+	bool	_cancel;		/**< Automatic send cancellation */
 	ESP8266WebServer*	_server;
+	PrepareFuncT	_canHandle;		/**< 'canHanlde' user owned function */
 };
 
 #endif
