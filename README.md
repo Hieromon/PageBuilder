@@ -232,10 +232,32 @@ Note that only the most recently registered PageBuilder object is valid.
 #### `String PageBuilder::build(void)`
 Returns the built html string from `const char* mold` that processed *token* by the user *function* of **TokenVT** which code as `{"token",function_name}`. The `build` method handles all *PageElement* objects that a *PageBuilder* contained.
 
-#### `void PageBuilder::cancel()`  
-Notify to **PageBuilder** that the generated HTML string should not be send. 
+#### `void PageBuilder::cancel(void)`  
+Notify to **PageBuilder** that the generated HTML string should not be send.  
+**PageBuilder** internally sends generated HTML with http 200 when invoked as *RequestHandler* from *handleClient()*. If the sketch wants to respond only to http response without generating HTML, you need to stop automatic transmission using the cancel method. The following example responds 302 with keep-alive connection. This response does not contain content. So the *Token func* will have the following code.
+```c++
+  server.sendHeader("Location", redirect-path, true);
+  server.sendHeader("Connection", "keep-alive");
+  server.send(302, "text/plain", "");
+  server.client().stop();
+```
+The sketch sends an http response in the *Token func* then **PageBuilder** should be stopped 200 response. The **cancel** method notifies this situation to the **PageBuilder**.
+```c++
+  ESP8266WebServer	server;
+  PageElement elm("{{RES}}", { "RES", tokenFunc });
+  PageBuilder page("/", { elm });
 
-#### `void PageBuilder::clearElement()`  
+  String tokenFunc(PageArgument& args) {
+    server.sendHeader("Location", redirect-path, true);
+    server.sendHeader("Connection", "keep-alive");
+    server.send(302, "text/plain", "");
+    server.client().stop();
+    page.cancel();
+    return "";
+  }
+```
+
+#### `void PageBuilder::clearElement(void)`  
 Clear enrolled **PageElement** objects in the **PageBuilder**.
 
 #### `void PageBuilder::exitCanHandle(PrepareFuncT prepareFunc)`  
@@ -268,8 +290,12 @@ Add the source HTML element string.
 
 ## Application hints
 
-A usual way, the sketch needs to statically prepare the PageElement object for each element of the web page. But assigning the web contents constructed by multi-page with `static const char*` (including PROGMEM) strangles the heap area.  
-By using **setMold** and **addToken** method of the PegeElement class, the sketch can construct the multiple pages of web content with just one PageBuilder object and a PageElement object.
+A usual way, the sketch needs to statically prepare the PageElement object for each element of the web page, so assigning the web contents constructed by multi-page with `static const char*` (including PROGMEM) strangles the heap area.  
+However, if the sketch can dynamically create a corresponding page at the time of receiving an http request, you can reduce the number of PageBuilder instances and PageElement instances.
+By using **setMold** and **addToken** method of the PegeElement class, the sketch can construct the multiple pages of web content with just one PageBuilder object and a PageElement object.  
+
+
+### Which is first called at the URL requested?
 
 ## Change log
 

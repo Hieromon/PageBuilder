@@ -28,8 +28,7 @@ bool handleAcs(HTTPMethod method, String uri) {
 	if (uri == currentUri) {
 		// Page is already prepared.
 		return true;
-	}
-	else {
+	} else {
 		currentUri = uri;
 		page.clearElement();		// Discards the remains of PageElement.
 	  page.addElement(elm);		// Register PageElement for current access.
