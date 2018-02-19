@@ -12,7 +12,7 @@ PageBuilder is an Arduino library class dedicated to the _ESP8266WebServer_ for 
 * Arbitrary token can be specified inline HTML statement
 * Automatically sent to client for HTML page are generated  
 
-Ordinary sketch | Skecth by PageBuilder  
+Ordinary sketch | Sketch by PageBuilder  
 ----------------|----------------------  
 ![ordinary_sketch](https://user-images.githubusercontent.com/12591771/33361508-cfad0c2e-d51b-11e7-873d-a401dc7decd9.png) | ![pagebuilder_sketch](https://user-images.githubusercontent.com/12591771/33361523-dc7e30cc-d51b-11e7-83a5-5f27bef0b71b.png)
   
@@ -28,7 +28,7 @@ Required [Arduino IDE](http://www.arduino.cc/en/main/software) is current upstre
 
 ## Example
 
-- A most simple example. - No uri handler is needed, only the uri path and html coded.
+- A most simple example. - No URI handler is needed, only the URI path and html coded.
 
 ```c++
 #include "PageBuilder.h"
@@ -84,8 +84,8 @@ This case is [FSPage.ino example sketch](examples/FSPage/README.md) in this repo
 ### Data structure of PageBuilder
 
 In order to successfully generate an HTML page using PageBuilder please understand the data structure of PageBuilder.  
-PageBuilder library consists of three objects that are related to each other as the below. `PageBuilder` inherits `RequestHandler` provided from ESP8266WebServer library and is invoked from `ESP8266WebServer` in response to http requests. PageBuilder owns its uri string and multiple PageElement objects.  
-Source strings of HTML are owned by `PageElement` (`mold` in the figure). Its string contains an identifier called a **token**. The **token** appears as `{{ }}` in the middle of the source HTML string (`_token` in the figure). The tokens are paired with functions to replace them with actual HTML sentences. When uri access has occurred server from the client, its paired function is invoked by extension of `handleClient()` method then the **token** will replace to actual statement to complete the HTML and sends it. `PageElement` can have multiple tokens (ie, it can define several tokens in one HTML source element).  
+PageBuilder library consists of three objects that are related to each other as the below. `PageBuilder` inherits `RequestHandler` provided from ESP8266WebServer library and is invoked from `ESP8266WebServer` in response to http requests. PageBuilder owns its URI string and multiple PageElement objects.  
+Source strings of HTML are owned by `PageElement` (`mold` in the figure). Its string contains an identifier called a **token**. The **token** appears as `{{ }}` in the middle of the source HTML string (`_token` in the figure). The tokens are paired with functions to replace them with actual HTML sentences. When URI access has occurred server from the client, its paired function is invoked by extension of `handleClient()` method then the **token** will replace to actual statement to complete the HTML and sends it. `PageElement` can have multiple tokens (i.e., it can define several tokens in one HTML source element).  
 ![default_data_structure](https://user-images.githubusercontent.com/12591771/33360699-293dc5ac-d518-11e7-8d31-728d500f02bf.png)  
 To properly generate a web page, you need to code its function that replaces the token with HTML, and its function must return a String.  
 ```c++
@@ -192,7 +192,7 @@ PageBuilder::PageBuilder(const char* uri, PageElementVT element, HTTPMethod meth
   PageBuilder page("/", {elem1, elem2});
   ```
 - `method` : Enum value of HTTP method as `HTTP_ANY`, `HTTP_GET`, `HTTP_POST` that page should respond.
-- `uri` : uri string of the page.
+- `uri` : A URI string of the page.
 
 #### PageElement constructor
 ```c++
@@ -241,10 +241,12 @@ Notify to **PageBuilder** that the generated HTML string should not be send.
   server.send(302, "text/plain", "");
   server.client().stop();
 ```
-The sketch sends an http response in the *Token func* then **PageBuilder** should be stopped 200 response. The **cancel** method notifies this situation to the **PageBuilder**.
+The sketch sends an http response in the *Token func* then **PageBuilder** should be stopped 200 response. The **cancel** method notifies this situation to the **PageBuilder**.  This example is in [**SendNakedHttp**](examples/SendNakedHttp/SendNakedHttp.ino).
 ```c++
+  String tokenFunc(PageArgument& args);
+
   ESP8266WebServer	server;
-  PageElement elm("{{RES}}", { "RES", tokenFunc });
+  PageElement elm("{{RES}}", { {"RES", tokenFunc} });
   PageBuilder page("/", { elm });
 
   String tokenFunc(PageArgument& args) {
@@ -261,18 +263,24 @@ The sketch sends an http response in the *Token func* then **PageBuilder** shoul
 Clear enrolled **PageElement** objects in the **PageBuilder**.
 
 #### `void PageBuilder::exitCanHandle(PrepareFuncT prepareFunc)`  
-- `prepareFunc` :
+- `prepareFunc` : User function instead of canHandle. This user function would be invoked at all request received.  
+```bool prepareFunc(HTTPMethod method, String uri);```  
+  - `method` : Same as parameter of PageBuilder constructor, `HTTP_ANY`, `HTTP_GET`, `HTTP_POST`.  
+  - `uri` : A URI string at this time.  
+  - Return : True if this URI request is processed by this PageBuilder, False if it is ignored.
+
+  **Important notes.** The prepareFunc specified by eixtCanHandled is called twice at one http request. See [Application hints](#application-hints) for details.
 
 #### `void PageBuilder::insert(ESP8266WebServer& server)`  
 Register the page and starts handling. It has the same effect as `on` method of `ESP8266WebServer`.
 - `server` : A reference of ESP8266WebServer object to register the page.
 
 #### `void PageBuilder::setUri(const char* uri)`  
-Set uri of this page.
-- `uri` : A pointer of uri string.
+Set URI of this page.
+- `uri` : A pointer of URI string.
 
 #### `const char* PageBuilder::uri()`  
-Get uri of this page.
+Get URI of this page.
 
 ### PageElement methods
 
@@ -295,7 +303,33 @@ However, if the sketch can dynamically create a corresponding page at the time o
 By using **setMold** and **addToken** method of the PegeElement class, the sketch can construct the multiple pages of web content with just one PageBuilder object and a PageElement object.  
 
 
-### Which is first called at the URL requested?
+### Which is first called at the URL requested by ESP8266WebServer class?
+In the first place, the request handler described in the **ESP8266WerbServer::on** method would be registered as the *RequestHandler* class. The *RequestHandler* has the **canHandle** method which purpose is to determine if the handler corresponds to the requested URI. **ESP8266WebServer::handleClient** method uses the **canHandle** method of the *RequestHandler* class for each URI request to determine the handler which should be invoked in all registered handlers. Which means that the **canHandle** method is the first called, and the **PageBuilder** has the hook way for the this.
+
+### Handling by a single PageBuilder object for all URI requests.  
+Using that hook way the sketch can aggregate all URI requests into a single PageBuilder object. The **exitCanHandle** method of PageBuilder specifies the user function to be called which is instead of the **canHandle** method. That user function overrides the canHandle method.  
+
+### The function by exitCanHandle.  
+Declaration of the function.
+```c++
+bool func(HTTPMethod method, String uri);
+```
+- `method` : Same as parameter of PageBuilder constructor, `HTTP_ANY`, `HTTP_GET`, `HTTP_POST`.  
+- `uri` : A URI string at this time.  
+- Return : True if this URI request is processed by this PageBuilder, False if it is ignored.
+
+Generally, the logic of the function to implementation is the follows.  
+
+a. Analysis of URI and generation of PageElement object for that page.  
+b. Setting the HTML mold of that page by [setMold](#-void-pageelement-setmold-const-char-mold-) method.  
+c. Registering the *token function* included in the mold by [addToken](#-void-pageelement-addtoken-string-token-handlefunct-handler-) method.  
+d. Action to ignore if the same URI of an already generated page is requested.  
+
+The function would be called twice at one http request. The cause is the internal logic of ESP8266WebServer (Relating to URI handler detection and URL parameter parsing), so the function specified by exitCanHandle needs to ignore the second call.
+
+### An example using this way.  
+[DynamicPage.ino](examples/DynamicPage/DynamicPage.ino)
+
 
 ## Change log
 

@@ -39,6 +39,16 @@ String  CURRENT_HOST;
 #define URI_WELCOME "/welcome"
 #define URI_FAILED  "/failed"
 
+// Connection request redirector
+String reqConnect(PageArgument&);
+PageElement REQ_ELM("{{REQ}}", { {"REQ", reqConnect} });
+PageBuilder REQ_PAGE(URI_REQ, {REQ_ELM});
+
+// Connection result redirector
+String resConnect(PageArgument&);
+PageElement CONNRES_ELM("{{CONN}}", { {"CONN", resConnect} });
+PageBuilder CONNRES_PAGE(URI_RESULT, {CONNRES_ELM});
+
 // This callback function would be invoked from the root page and scans nearby
 // WiFi-AP to make a connectable list.
 String listSSID(PageArgument& args) {
@@ -94,6 +104,7 @@ String reqConnect(PageArgument& args) {
   // Redirect http request to connection result page.
   server.sendHeader("Location", String("http://") + WiFi.softAPIP().toString() + String(URI_RESULT), true);
   server.send(302, "text/plain", "");
+  REQ_PAGE.cancel();
   return "";
 }
 
@@ -137,6 +148,7 @@ String resConnect(PageArgument& args) {
   server.sendHeader("Connection", "keep-alive");
   server.send(302, "text/plain", "");
   server.client().stop();
+  CONNRES_PAGE.cancel();
 
   Serial.println();
   WiFi.printDiag(Serial);
@@ -187,14 +199,6 @@ PageElement ENTRY_ELM("file:/entry.htm", {
   { "PSK", [](PageArgument& args) { return args.arg("psk_type") != "7" ? "<input type=\"text\" name=\"psk\" placeholder=\"Password\" />" : ""; } }
 });
 PageBuilder ENTRY_PAGE(URI_JOIN, {ENTRY_ELM});
-
-// Connection request redirector
-PageElement REQ_ELM("{{REQ}}", { {"REQ", reqConnect} });
-PageBuilder REQ_PAGE(URI_REQ, {REQ_ELM});
-
-// Connection result redirector
-PageElement CONNRES_ELM("{{CONN}}", { {"CONN", resConnect} });
-PageBuilder CONNRES_PAGE(URI_RESULT, {CONNRES_ELM});
 
 // Connection successful page
 PageElement WELCOME_ELM("file:/connect.htm", {

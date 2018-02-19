@@ -23,6 +23,7 @@ script:
  - arduino --verify --board $BD $PWD/examples/WebPageHello/WebPageHello.ino
  - arduino --verify --board $BD $PWD/examples/FSPage/FSPage.ino
  - arduino --verify --board $BD $PWD/examples/DynamicPage/DynamicPage.ino
+ - arduino --verify --board $BD $PWD/examples/SendNakedHttp/SendNakedHttp.ino
 
 notifications:
   email:
