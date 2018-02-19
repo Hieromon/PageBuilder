@@ -321,8 +321,8 @@ bool func(HTTPMethod method, String uri);
 Generally, the logic of the function to implementation is the follows.  
 
 a. Analysis of URI and generation of PageElement object for that page.  
-b. Setting the HTML mold of that page by [setMold](#-void-pageelement-setmold-const-char-mold-) method.  
-c. Registering the *token function* included in the mold by [addToken](#-void-pageelement-addtoken-string-token-handlefunct-handler-) method.  
+b. Setting the HTML mold of that page by [setMold](#void-pageelement-setmold-const-char-mold-) method.  
+c. Registering the *token function* included in the mold by [addToken](#void-pageelement-addtoken-string-token-handlefunct-handler-) method.  
 d. Action to ignore if the same URI of an already generated page is requested.  
 
 The function would be called twice at one http request. The cause is the internal logic of ESP8266WebServer (Relating to URI handler detection and URL parameter parsing), so the function specified by exitCanHandle needs to ignore the second call.
