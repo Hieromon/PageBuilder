@@ -333,6 +333,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
+#### [1.0.1] 2018-03-19
+- Fix WebELD example, no library change.
+
 #### [1.0.0] 2018-02-17
 - Supports **cancel** method in PageBuilder class.
 - Supports **setMold** method in PageElement class.
