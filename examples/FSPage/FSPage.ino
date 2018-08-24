@@ -16,15 +16,25 @@
   of ESP8266 by the tool as "ESP8266 Sketch Data Upload" in Tools menu in
   Arduino IDE.
 */
+#if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <FS.h>
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <WiFi.h>
+#include <WebServer.h>
+#endif
 #include "PageBuilder.h"
 
-#define AP_NAME "esp8266ap"
+#define AP_NAME "esp-ap"
 #define AP_PASS "12345678"
 
+#if defined(ARDUINO_ARCH_ESP8266)
 ESP8266WebServer server;
+#elif defined(ARDUINO_ARCH_ESP32)
+WebServer server;
+#endif
+
 bool    CONNECT_REQ;
 String  CONN_SSID;
 String  CONN_PSK;
@@ -183,6 +193,15 @@ void broadcastEvent(WiFiEvent_t event) {
     Serial.println(String("[event] ") + String(FPSTR(eventText)));
 }
 
+// Get an architecture of compiled
+String getArch(PageArgument& args) {
+#if defined(ARDUINO_ARCH_ESP8266)
+  return "ESP8266";
+#elif defined(ARDUINO_ARCH_ESP32)
+  return "ESP32";
+#endif
+}
+
 // HTML page declarations.
 // root page
 PageElement SSID_ELM("file:/root.htm", {
@@ -193,6 +212,7 @@ PageBuilder SSID_PAGE(URI_ROOT, { SSID_ELM });
 
 // SSID & Password entry page
 PageElement ENTRY_ELM("file:/entry.htm", {
+  { "ESP_ARCH", getArch },
   { "ENTRY", [](PageArgument& args) { CONN_SSID = args.arg("ssid"); return "AP"; } },
   { "URI_REQ", [](PageArgument& args) { return URI_REQ; } },
   { "SSID", [](PageArgument& args) { return CONN_SSID == "?" ? "placeholder=\"SSID\"" : String("value=\"" + CONN_SSID + "\" readonly"); } },
@@ -202,7 +222,7 @@ PageBuilder ENTRY_PAGE(URI_JOIN, {ENTRY_ELM});
 
 // Connection successful page
 PageElement WELCOME_ELM("file:/connect.htm", {
-  { "ESP8266AP", [](PageArgument& args) { return AP_NAME; } },
+  { "ESP-AP", [](PageArgument& args) { return AP_NAME; } },
   { "SSID", [](PageArgument& args) { return WiFi.SSID(); } },
   { "IP", [](PageArgument& args) { return WiFi.localIP().toString(); } },
   { "GATEWAY", [](PageArgument& args) { return WiFi.gatewayIP().toString(); } },

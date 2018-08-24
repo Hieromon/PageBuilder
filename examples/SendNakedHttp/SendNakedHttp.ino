@@ -1,5 +1,10 @@
+#if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <WiFi.h>
+#include <WebServer.h>
+#endif
 #include <PageBuilder.h>
 
 // Modify according to your Wi-Fi environment.
@@ -12,7 +17,12 @@
 // the token function then it must inform to the PageBuilder
 // about sending stop for http:200.
 
+#if defined(ARDUINO_ARCH_ESP8266)
 ESP8266WebServer  server;
+#elif defined(ARDUINO_ARCH_ESP32)
+WebServer  server;
+#endif
+
 String tokenFunc(PageArgument&);
 PageElement elm("{{RES}}", {{ "RES", tokenFunc }});
 PageBuilder page("/", { elm });   // Accessing "/" will call the tokenFunc.
