@@ -20,9 +20,19 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <FS.h>
+#define WIFI_EVENT_STA_CONNECTED      WIFI_EVENT_STAMODE_CONNECTED
+#define WIFI_EVENT_STA_DISCONNECTED   WIFI_EVENT_STAMODE_DISCONNECTED
+#define WIFI_EVENT_AP_STACONNECTED    WIFI_EVENT_SOFTAPMODE_STACONNECTED
+#define WIFI_EVENT_AP_STADISCONNECTED WIFI_EVENT_SOFTAPMODE_STADISCONNECTED
+#define WIFI_EVENT_ALL                WIFI_EVENT_ANY
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
 #include <WebServer.h>
+#define WIFI_EVENT_STA_CONNECTED      SYSTEM_EVENT_STA_CONNECTED
+#define WIFI_EVENT_STA_DISCONNECTED   SYSTEM_EVENT_STA_DISCONNECTED
+#define WIFI_EVENT_AP_STACONNECTED    SYSTEM_EVENT_AP_STACONNECTED
+#define WIFI_EVENT_AP_STADISCONNECTED SYSTEM_EVENT_AP_STADISCONNECTED
+#define WIFI_EVENT_ALL                SYSTEM_EVENT_MAX
 #endif
 #include "PageBuilder.h"
 
@@ -174,16 +184,16 @@ void broadcastEvent(WiFiEvent_t event) {
   const char* eventText;
 
   switch (event) {
-    case WIFI_EVENT_SOFTAPMODE_STACONNECTED:
+    case WIFI_EVENT_AP_STACONNECTED:
       eventText = eventText_APSTA_CONN;
       break;
-    case WIFI_EVENT_SOFTAPMODE_STADISCONNECTED:
+    case WIFI_EVENT_AP_STADISCONNECTED:
       eventText = eventText_APSTA_DISC;
       break;
-    case WIFI_EVENT_STAMODE_CONNECTED:
+    case WIFI_EVENT_STA_CONNECTED:
       eventText = eventText_STA_CONN;
       break;
-    case WIFI_EVENT_STAMODE_DISCONNECTED:
+    case WIFI_EVENT_STA_DISCONNECTED:
       eventText = eventText_STA_DISC;
       break;
     default:
@@ -265,7 +275,7 @@ void setup() {
   Serial.println(WiFi.softAPIP());
 
   // Turn on WiFi event handling.
-  WiFi.onEvent(broadcastEvent, WIFI_EVENT_ANY);
+  WiFi.onEvent(broadcastEvent, WIFI_EVENT_ALL);
 }
 
 void loop() {
