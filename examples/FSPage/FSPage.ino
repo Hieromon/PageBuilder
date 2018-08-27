@@ -25,9 +25,11 @@
 #define WIFI_EVENT_AP_STACONNECTED    WIFI_EVENT_SOFTAPMODE_STACONNECTED
 #define WIFI_EVENT_AP_STADISCONNECTED WIFI_EVENT_SOFTAPMODE_STADISCONNECTED
 #define WIFI_EVENT_ALL                WIFI_EVENT_ANY
+#define WIFI_AUTH_OPEN                ENC_TYPE_NONE
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
 #include <WebServer.h>
+#include <SPIFFS.h>
 #define WIFI_EVENT_STA_CONNECTED      SYSTEM_EVENT_STA_CONNECTED
 #define WIFI_EVENT_STA_DISCONNECTED   SYSTEM_EVENT_STA_DISCONNECTED
 #define WIFI_EVENT_AP_STACONNECTED    SYSTEM_EVENT_AP_STACONNECTED
@@ -82,7 +84,7 @@ String listSSID(PageArgument& args) {
     s_ssid_list += ssid == "?" ? "%3F" : ssid;
     s_ssid_list += "&psk_type=" + String(WiFi.encryptionType(i)) + "\">" + ssid + "</a>";
     s_ssid_list += String(toWiFiQuality(WiFi.RSSI(i))) + "%";
-    if (WiFi.encryptionType(i) != ENC_TYPE_NONE)
+    if (WiFi.encryptionType(i) != WIFI_AUTH_OPEN)
       s_ssid_list += "<span class=\"img_lock\" />";
     s_ssid_list += "</div>";
   }
