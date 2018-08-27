@@ -35,9 +35,6 @@
 #define WIFI_EVENT_AP_STACONNECTED    SYSTEM_EVENT_AP_STACONNECTED
 #define WIFI_EVENT_AP_STADISCONNECTED SYSTEM_EVENT_AP_STADISCONNECTED
 #define WIFI_EVENT_ALL                SYSTEM_EVENT_MAX
-#ifndef BUILTIN_LED
-#define BUILTIN_LED 2 // Adjust to the actual board
-#endif
 #endif
 #include "PageBuilder.h"
 

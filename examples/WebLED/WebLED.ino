@@ -4,6 +4,9 @@
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
 #include <WebServer.h>
+#ifndef BUILTIN_LED
+#define BUILTIN_LED 2 // Adjust to the actual board
+#endif
 #endif
 #include "PageBuilder.h"
 #include "WebLED.h"   // Only the LED lighting icon
