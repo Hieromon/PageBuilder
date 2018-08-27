@@ -1,5 +1,13 @@
+#if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <WiFi.h>
+#include <WebServer.h>
+#ifndef BUILTIN_LED
+#define BUILTIN_LED 2 // Adjust to the actual board
+#endif
+#endif
 #include "PageBuilder.h"
 #include "WebLED.h"   // Only the LED lighting icon
 
@@ -11,13 +19,13 @@ static const char PROGMEM _PAGE_LED[] = R"rawliteral(
 <html>
 <head>
   <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
-  <title>ESP8266 LED Control</title>
+  <title>{{ARCH}} LED Control</title>
   <style type="text/css">
   {{STYLE}}
   </style>
 </head>
 <body>
-  <p>ESP8266 LED Control</p>
+  <p>{{ARCH}} LED Control</p>
   <div class="one">
   <p><a class="button" href="/?led=on">ON</a></p>
   <p><a class="button" href="/?led=off">OFF</a></p>
@@ -65,6 +73,15 @@ p {
 // BUILTIN_LED is controled by the web page.
 #define ONBOARD_LED 2     // Different pin assignment by each module
 
+// Get an architecture of compiled
+String getArch(PageArgument& args) {
+#if defined(ARDUINO_ARCH_ESP8266)
+  return "ESP8266";
+#elif defined(ARDUINO_ARCH_ESP32)
+  return "ESP32";
+#endif
+}
+
 // This function is the logic for BUILTIN_LED on/off.
 // It is called from the occurrence of the 'LEDIO' token by PageElement
 //  'Button' declaration as following code.
@@ -83,20 +100,26 @@ String ledIO(PageArgument& args) {
   // Feedback the lighting icon depending on actual port value which
   //  indepent from the http request parameter.
   if (digitalRead(BUILTIN_LED) == LOW)
-      ledImage = FPSTR(_PNG_LED);
+    ledImage = FPSTR(_PNG_LED);
   return ledImage;
 }
 
 // Page construction
 PageElement Button(_PAGE_LED, {
   {"STYLE", [](PageArgument& arg) { return String(_STYLE_BUTTON); }},
+  {"ARCH", getArch },
   {"LEDIO", ledIO }
 });
 PageBuilder LEDPage("/", {Button});
 
+#if defined(ARDUINO_ARCH_ESP8266)
 ESP8266WebServer  Server;
-const char* SSID = "aiPon";  // Modify for your available WiFi AP
-const char* PSK  = "1nxb4d8hn701b";  // Modify for your available WiFi AP
+#elif defined(ARDUINO_ARCH_ESP32)
+WebServer  Server;
+#endif
+
+const char* SSID = "********";  // Modify for your available WiFi AP
+const char* PSK  = "********";  // Modify for your available WiFi AP
 
 #define BAUDRATE 115200
 

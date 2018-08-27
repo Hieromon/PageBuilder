@@ -3,13 +3,16 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.0.0
- *  @date   2018-01-17
+ *  @version    1.1.0
+ *  @date   2018-08-21
  *  @copyright  MIT license.
  */
 
 #include "PageBuilder.h"
 #include <FS.h>
+#ifdef ARDUINO_ARCH_ESP32
+#include <SPIFFS.h>
+#endif
 
 /** 
  *  HTTP header structure.
@@ -76,7 +79,7 @@ bool PageBuilder::canUpload(String requestUri) {
  *  @retval true    A response send.
  *  @retval false   This request could not handled.
  */
-bool PageBuilder::_sink(int code, ESP8266WebServer& server) { //, HTTPMethod requestMethod, String requestUri) {
+bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod requestMethod, String requestUri) {
     // Retrieve request arguments
     PageArgument args;
     for (uint8_t i = 0; i < server.args(); i++)
@@ -98,7 +101,7 @@ bool PageBuilder::_sink(int code, ESP8266WebServer& server) { //, HTTPMethod req
     return true;
 }
 
-bool PageBuilder::handle(ESP8266WebServer& server, HTTPMethod requestMethod, String requestUri) {
+bool PageBuilder::handle(WebServerClass& server, HTTPMethod requestMethod, String requestUri) {
     // Screening the available request
     if (!canHandle(requestMethod, requestUri))
         return false;
@@ -131,7 +134,7 @@ void PageBuilder::clearElement() {
  *  Send a http header for the page to be must-revalidate on the client.
  *  @param  server  A reference of ESP8266WebServer.
  */
-void PageBuilder::sendNocacheHeader(ESP8266WebServer& server) {
+void PageBuilder::sendNocacheHeader(WebServerClass& server) {
     for (uint8_t i = 0; i < sizeof(_HttpHeaderNocache) / sizeof(HTTPHeaderS); i++)
         server.sendHeader(_HttpHeaderNocache[i]._field, _HttpHeaderNocache[i]._directives);
 }
@@ -140,7 +143,7 @@ void PageBuilder::sendNocacheHeader(ESP8266WebServer& server) {
  *  Register the not found page to ESP8266Server.
  `  @param  server  A reference of ESP8266WebServer.
  */
-void PageBuilder::atNotFound(ESP8266WebServer& server) {
+void PageBuilder::atNotFound(WebServerClass& server) {
     _server = &server;
     server.onNotFound(std::bind(&PageBuilder::exit404, this));
 }

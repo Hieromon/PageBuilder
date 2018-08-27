@@ -16,15 +16,37 @@
   of ESP8266 by the tool as "ESP8266 Sketch Data Upload" in Tools menu in
   Arduino IDE.
 */
+#if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <FS.h>
+#define WIFI_EVENT_STA_CONNECTED      WIFI_EVENT_STAMODE_CONNECTED
+#define WIFI_EVENT_STA_DISCONNECTED   WIFI_EVENT_STAMODE_DISCONNECTED
+#define WIFI_EVENT_AP_STACONNECTED    WIFI_EVENT_SOFTAPMODE_STACONNECTED
+#define WIFI_EVENT_AP_STADISCONNECTED WIFI_EVENT_SOFTAPMODE_STADISCONNECTED
+#define WIFI_EVENT_ALL                WIFI_EVENT_ANY
+#define WIFI_AUTH_OPEN                ENC_TYPE_NONE
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <WiFi.h>
+#include <WebServer.h>
+#include <SPIFFS.h>
+#define WIFI_EVENT_STA_CONNECTED      SYSTEM_EVENT_STA_CONNECTED
+#define WIFI_EVENT_STA_DISCONNECTED   SYSTEM_EVENT_STA_DISCONNECTED
+#define WIFI_EVENT_AP_STACONNECTED    SYSTEM_EVENT_AP_STACONNECTED
+#define WIFI_EVENT_AP_STADISCONNECTED SYSTEM_EVENT_AP_STADISCONNECTED
+#define WIFI_EVENT_ALL                SYSTEM_EVENT_MAX
+#endif
 #include "PageBuilder.h"
 
-#define AP_NAME "esp8266ap"
+#define AP_NAME "esp-ap"
 #define AP_PASS "12345678"
 
+#if defined(ARDUINO_ARCH_ESP8266)
 ESP8266WebServer server;
+#elif defined(ARDUINO_ARCH_ESP32)
+WebServer server;
+#endif
+
 bool    CONNECT_REQ;
 String  CONN_SSID;
 String  CONN_PSK;
@@ -62,7 +84,7 @@ String listSSID(PageArgument& args) {
     s_ssid_list += ssid == "?" ? "%3F" : ssid;
     s_ssid_list += "&psk_type=" + String(WiFi.encryptionType(i)) + "\">" + ssid + "</a>";
     s_ssid_list += String(toWiFiQuality(WiFi.RSSI(i))) + "%";
-    if (WiFi.encryptionType(i) != ENC_TYPE_NONE)
+    if (WiFi.encryptionType(i) != WIFI_AUTH_OPEN)
       s_ssid_list += "<span class=\"img_lock\" />";
     s_ssid_list += "</div>";
   }
@@ -164,16 +186,16 @@ void broadcastEvent(WiFiEvent_t event) {
   const char* eventText;
 
   switch (event) {
-    case WIFI_EVENT_SOFTAPMODE_STACONNECTED:
+    case WIFI_EVENT_AP_STACONNECTED:
       eventText = eventText_APSTA_CONN;
       break;
-    case WIFI_EVENT_SOFTAPMODE_STADISCONNECTED:
+    case WIFI_EVENT_AP_STADISCONNECTED:
       eventText = eventText_APSTA_DISC;
       break;
-    case WIFI_EVENT_STAMODE_CONNECTED:
+    case WIFI_EVENT_STA_CONNECTED:
       eventText = eventText_STA_CONN;
       break;
-    case WIFI_EVENT_STAMODE_DISCONNECTED:
+    case WIFI_EVENT_STA_DISCONNECTED:
       eventText = eventText_STA_DISC;
       break;
     default:
@@ -181,6 +203,15 @@ void broadcastEvent(WiFiEvent_t event) {
   }
   if (eventText)
     Serial.println(String("[event] ") + String(FPSTR(eventText)));
+}
+
+// Get an architecture of compiled
+String getArch(PageArgument& args) {
+#if defined(ARDUINO_ARCH_ESP8266)
+  return "ESP8266";
+#elif defined(ARDUINO_ARCH_ESP32)
+  return "ESP32";
+#endif
 }
 
 // HTML page declarations.
@@ -193,6 +224,7 @@ PageBuilder SSID_PAGE(URI_ROOT, { SSID_ELM });
 
 // SSID & Password entry page
 PageElement ENTRY_ELM("file:/entry.htm", {
+  { "ESP_ARCH", getArch },
   { "ENTRY", [](PageArgument& args) { CONN_SSID = args.arg("ssid"); return "AP"; } },
   { "URI_REQ", [](PageArgument& args) { return URI_REQ; } },
   { "SSID", [](PageArgument& args) { return CONN_SSID == "?" ? "placeholder=\"SSID\"" : String("value=\"" + CONN_SSID + "\" readonly"); } },
@@ -202,7 +234,7 @@ PageBuilder ENTRY_PAGE(URI_JOIN, {ENTRY_ELM});
 
 // Connection successful page
 PageElement WELCOME_ELM("file:/connect.htm", {
-  { "ESP8266AP", [](PageArgument& args) { return AP_NAME; } },
+  { "ESP-AP", [](PageArgument& args) { return AP_NAME; } },
   { "SSID", [](PageArgument& args) { return WiFi.SSID(); } },
   { "IP", [](PageArgument& args) { return WiFi.localIP().toString(); } },
   { "GATEWAY", [](PageArgument& args) { return WiFi.gatewayIP().toString(); } },
@@ -245,7 +277,7 @@ void setup() {
   Serial.println(WiFi.softAPIP());
 
   // Turn on WiFi event handling.
-  WiFi.onEvent(broadcastEvent, WIFI_EVENT_ANY);
+  WiFi.onEvent(broadcastEvent, WIFI_EVENT_ALL);
 }
 
 void loop() {

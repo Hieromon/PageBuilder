@@ -3,7 +3,7 @@ dist: trusty
 group: deprecated-2017Q4
 language: c
 env:
-  - BD=esp8266:esp8266:nodemcuv2:CpuFrequency=160,FlashSize=4M3M
+  - BD1=esp8266:esp8266:nodemcuv2:CpuFrequency=160,FlashSize=4M3M BD2=esp32:esp32:esp32
 before_install:
   - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16"
   - sleep 3
@@ -14,16 +14,23 @@ before_install:
   - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
 install:
   - ln -s $PWD /usr/local/share/arduino/libraries/PageBuilder
-  - arduino --pref "boardsmanager.additional.urls=http://arduino.esp8266.com/stable/package_esp8266com_index.json" --save-prefs
-  - arduino --install-boards esp8266:esp8266
-  - arduino --board $BD --save-prefs
+  - arduino --pref "boardsmanager.additional.urls=http://arduino.esp8266.com/stable/package_esp8266com_index.json,https://dl.espressif.com/dl/package_esp32_index.json" --save-prefs
   - arduino --pref "compiler.warning_level=all" --save-prefs
+  - arduino --install-boards "esp8266:esp8266"
+  - arduino --install-boards "esp32:esp32"
 script:
- - arduino --verify --board $BD $PWD/examples/WebLED/WebLED.ino
- - arduino --verify --board $BD $PWD/examples/WebPageHello/WebPageHello.ino
- - arduino --verify --board $BD $PWD/examples/FSPage/FSPage.ino
- - arduino --verify --board $BD $PWD/examples/DynamicPage/DynamicPage.ino
- - arduino --verify --board $BD $PWD/examples/SendNakedHttp/SendNakedHttp.ino
+ - arduino --board $BD1 --save-prefs
+ - arduino --verify --board $BD1 $PWD/examples/WebLED/WebLED.ino
+ - arduino --verify --board $BD1 $PWD/examples/WebPageHello/WebPageHello.ino
+ - arduino --verify --board $BD1 $PWD/examples/FSPage/FSPage.ino
+ - arduino --verify --board $BD1 $PWD/examples/DynamicPage/DynamicPage.ino
+ - arduino --verify --board $BD1 $PWD/examples/SendNakedHttp/SendNakedHttp.ino
+ - arduino --board $BD2 --save-prefs
+ - arduino --verify --board $BD2 $PWD/examples/WebLED/WebLED.ino
+ - arduino --verify --board $BD2 $PWD/examples/WebPageHello/WebPageHello.ino
+ - arduino --verify --board $BD2 $PWD/examples/FSPage/FSPage.ino
+ - arduino --verify --board $BD2 $PWD/examples/DynamicPage/DynamicPage.ino
+ - arduino --verify --board $BD2 $PWD/examples/SendNakedHttp/SendNakedHttp.ino
 
 notifications:
   email:

@@ -2,8 +2,8 @@
  *	Declaration of PaguBuilder class and accompanying PageElement, PageArgument class.
  *	@file	PageBuilder.h
  *	@author	hieromon@gmail.com
- *	@version	1.0.0
- *	@date	2018-01-17
+ *	@version	1.1.0
+ *	@date	2018-08-21
  *	@copyright	MIT license.
  */
 
@@ -19,8 +19,15 @@
 #include <functional>
 #include <vector>
 #include <memory>
+#if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+using WebServerClass = ESP8266WebServer;
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <WiFi.h>
+#include <WebServer.h>
+using WebServerClass = WebServer;
+#endif
 
 #define PAGEELEMENT_FILE	"file:"
 
@@ -137,17 +144,17 @@ public:
 
 	bool canHandle(HTTPMethod requestMethod, String requestUri) override;
 	bool canUpload(String requestUri) override;
-	bool handle(ESP8266WebServer& server, HTTPMethod requestMethod, String requestUri) override;
+	bool handle(WebServerClass& server, HTTPMethod requestMethod, String requestUri) override;
 
 	void setUri(const char* uri) { _uri = uri; }
 	const char*	uri() { return _uri; }
-	void insert(ESP8266WebServer& server) { server.addHandler(this); }
+	void insert(WebServerClass& server) { server.addHandler(this); }
 	void addElement(PageElement& element) { _element.push_back(element); }
 	void clearElement();
-	static void sendNocacheHeader(ESP8266WebServer& server);
+	static void sendNocacheHeader(WebServerClass& server);
 	String build(void);
 	String build(PageArgument& args);
-	void atNotFound(ESP8266WebServer& server);
+	void atNotFound(WebServerClass& server);
 	void exit404(void);
 	void exitCanHandle(PrepareFuncT prepareFunc) { _canHandle = prepareFunc; }
 	void cancel() { _cancel = true; }
@@ -158,10 +165,10 @@ protected:
 	HTTPMethod		_method;		/**< Method of http request to which this page applies. */
 
 private:
-	bool	_sink(int code, ESP8266WebServer& server); //, HTTPMethod requestMethod, String requestUri);
+	bool	_sink(int code, WebServerClass& server); //, HTTPMethod requestMethod, String requestUri);
 	bool	_noCache;		/**< A flag for must-revalidate cache control response */
 	bool	_cancel;		/**< Automatic send cancellation */
-	ESP8266WebServer*	_server;
+	WebServerClass*	_server;
 	PrepareFuncT	_canHandle;		/**< 'canHanlde' user owned function */
 };
 
