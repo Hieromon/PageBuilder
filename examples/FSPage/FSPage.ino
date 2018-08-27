@@ -254,19 +254,18 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
 
-  // Prepare HTML page and start http server.
+  // Prepare HTML page 
   SSID_PAGE.insert(server);
   ENTRY_PAGE.insert(server);
   REQ_PAGE.insert(server);
   CONNRES_PAGE.insert(server);
   WELCOME_PAGE.insert(server);
   FAILED_PAGE.insert(server);
-  SPIFFS.begin();
-  server.begin();
 
   // Start WiFi soft AP.
   WiFi.softAPdisconnect();
   WiFi.disconnect();
+  delay(100);
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(AP_NAME, AP_PASS);
   while (WiFi.softAPIP() == IPAddress(0, 0, 0, 0)) {
@@ -275,6 +274,10 @@ void setup() {
   }
   Serial.print(AP_NAME " started. IP:");
   Serial.println(WiFi.softAPIP());
+
+  // Start http server.
+  SPIFFS.begin();
+  server.begin();
 
   // Turn on WiFi event handling.
   WiFi.onEvent(broadcastEvent, WIFI_EVENT_ALL);
