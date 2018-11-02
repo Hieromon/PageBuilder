@@ -337,6 +337,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
+#### [1.1.1] 2018-11-21
+- Fix the destructor PageBuilder can be inherited.
+
 #### [1.1.0] 2018-08-21
 - Supports ESP32 platform depends on the **WebServer** class.  
 A stable version of [arduino-esp32 core](https://github.com/espressif/arduino-esp32/releases/latest) version 1.0.0 or higher is required.

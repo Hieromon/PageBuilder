@@ -2,8 +2,8 @@
  *	Declaration of PaguBuilder class and accompanying PageElement, PageArgument class.
  *	@file	PageBuilder.h
  *	@author	hieromon@gmail.com
- *	@version	1.1.0
- *	@date	2018-08-21
+ *	@version	1.1.1
+ *	@date	2018-11-21
  *	@copyright	MIT license.
  */
 
@@ -91,7 +91,7 @@ public:
 	PageElement() : _mold(nullptr) {}
 	PageElement(const char* mold) : _mold(mold), _source(std::vector<TokenSourceST>()) {}
 	PageElement(const char* mold, TokenVT source) : _mold(mold), _source(source) {}
-	~PageElement();
+	virtual ~PageElement();
 
 	const char*		mold() { return _mold; }
 	TokenVT			source() { return _source; }
@@ -140,7 +140,7 @@ public:
 		_server(nullptr),
 		_canHandle(nullptr) {}
 
-	~PageBuilder() { _uri = nullptr; _server = nullptr; clearElement(); }
+	virtual ~PageBuilder() { _uri = nullptr; _server = nullptr; clearElement(); }
 
 	bool canHandle(HTTPMethod requestMethod, String requestUri) override;
 	bool canUpload(String requestUri) override;
