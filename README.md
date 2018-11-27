@@ -141,7 +141,7 @@ page.insert(server);    // This is needed.
 server.handleClient();  // Invoke from this.
 ```
 
-### Arguments of invked user function
+### Arguments of invoked user function
 
 Arguments are passed to the **function** that should be implemented corresponding to tokens. It is the parameter value as GET or POST at the http request occurred like as `url?param=value` in HTTP GET, and its parameters are stored in `PageArgument` object and passed to the function as below.  
 - HTTP GET with `http://xxx.xxx.xxx/?param=value`  
@@ -164,7 +164,7 @@ Returns the value of the parameter specified by `name`.
 Returns the value of the parameter indexed `i`.
 
 #### `String PageArgument::argName(int i)`  
-Retuens parameter name of indexed i.
+Returns parameter name of indexed i.
 
 #### `int PageArgument::args()`  
 Get parameters count of the current http request.
@@ -186,8 +186,8 @@ Returns whether the `name` parameter is specified in the current http request.
 #### PageBuilder constructor
 ```c++
 PageBuilder::PageBuilder();
-PageBuilder::PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY);
-PageBuilder::PageBuilder(const char* uri, PageElementVT element, HTTPMethod method = HTTP_ANY);
+PageBuilder::PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY, TransferEncoding_t chunked = PB_Auto);
+PageBuilder::PageBuilder(const char* uri, PageElementVT element, HTTPMethod method = HTTP_ANY, TransferEncoding_t chunked = PB_Auto);
 ```
 - `element` : **PageElement** container wrapper. Normally, use the brackets to specify initializer.  
   ```c++
@@ -197,6 +197,7 @@ PageBuilder::PageBuilder(const char* uri, PageElementVT element, HTTPMethod meth
   ```
 - `method` : Enum value of HTTP method as `HTTP_ANY`, `HTTP_GET`, `HTTP_POST` that page should respond.
 - `uri` : A URI string of the page.
+- `chunked` : Enumeration type for the transfer-encoding as TransferEncoding_t type. `PB_Chunked`, `PB_Through`, `PB_Auto` can be specified. If `PB_Auto` is specified, would be determined automatically to switch them the chunk. Its criteria is defined with `MAX_CONTENTBLOCK_LENGTH` macro in `PageBuilder.cpp` code.
 
 #### PageElement constructor
 ```c++
@@ -286,6 +287,10 @@ Set URI of this page.
 #### `const char* PageBuilder::uri()`  
 Get URI of this page.
 
+#### `void PageBuilder::chunked(const TransferEncoding_t chunked)`
+Set Transfer-Encoding with chunked, or not.
+- `chunked` : Enumeration type for the transfer-encoding.
+
 ### PageElement methods
 
 #### `const char* PageElement::mold()`  
@@ -337,7 +342,8 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
-#### [1.1.1] 2018-11-21
+#### [1.2.0] 2018-12-01
+- Fixed incomplete transmission of large HTML string. Chunked-encoding has been implemented accordingly.
 - Fix the destructor PageBuilder can be inherited.
 
 #### [1.1.0] 2018-08-21

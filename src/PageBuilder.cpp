@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.1.0
- *  @date   2018-08-21
+ *  @version    1.2.0
+ *  @date   2018-12-01
  *  @copyright  MIT license.
  */
 
@@ -13,6 +13,9 @@
 #ifdef ARDUINO_ARCH_ESP32
 #include <SPIFFS.h>
 #endif
+
+// A maximum length of the content block to switch to chunked transfer.
+#define MAX_CONTENTBLOCK_LENGTH 6000
 
 /** 
  *  HTTP header structure.
@@ -95,8 +98,23 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
 
     // send http content to client
     if (!_cancel) {
-        server.setContentLength(content.length());
-        server.send(code, "text/html", content);
+        int     contLen = content.length();
+        bool    _chunked = (_sendEnc == PB_Chunked);
+        if (_sendEnc == PB_Auto) {
+            if (contLen >= MAX_CONTENTBLOCK_LENGTH)
+                _chunked = true;
+        }
+        PB_DBG("Res: %d, Chunked: %d\n", code, _sendEnc);
+        PB_DBG("Free heap: %d, Sending length: %d\n", ESP.getFreeHeap(), contLen);
+        if (code == 200 && _chunked) {
+            PB_DBG("Transfer-Encoding: chunked\n");
+            PageStream  contStream(content);
+            server.streamFile(contStream, "text/html");
+        }
+        else {
+            server.setContentLength(contLen);
+            server.send(code, "text/html", content);
+        }
     }
     return true;
 }
@@ -198,7 +216,7 @@ void PageElement::addToken(String token, HandleFuncT handler) {
     source._token = token;
     source._builder = handler;
     _source.push_back(source);
-};
+}
 
 /***
  *  @brief  Build html source.<br>
@@ -383,4 +401,21 @@ RequestArgument* PageArgument::item(int index) {
         return argList->_argument.get();
     else
         return nullptr;
+}
+
+/**
+ *  Read into the buffer from the String.
+ *  @param  buffer  A pointer of the buffer to be read string.
+ *  @param  length  Maximum reading size.
+ *  @return Number of bytes readed. 
+ */
+size_t PageStream::readBytes(char *buffer, size_t length) {
+    size_t  count = 0;
+    while (count < length) {
+        if (_pos >= _content.length())
+            break;
+        *buffer++ = _content.charAt(_pos++);
+        count++;
+    }
+    return count;
 }
