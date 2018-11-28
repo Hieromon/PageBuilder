@@ -31,7 +31,7 @@ using WebServerClass = WebServer;
 #endif
 
 // Uncomment the following PB_DEBUG to enable debug output.
-#define PB_DEBUG
+//#define PB_DEBUG
 
 // Debug output destination can be defined externally with PB_DEBUG_PORT
 #ifndef PB_DEBUG_PORT
@@ -53,9 +53,9 @@ typedef struct _RequestArgumentS {
 
 /** Transfer encoding type with ESP8266WebSever::sendcontent */
 typedef enum {
-  PB_Chunked,          /**< Use chunked transfer */
-  PB_Through,          /**< Specifiy content length */
-  PB_Auto              /**< Dynamically change the transfer encoding according to the content length. */
+  PB_Auto,             /**< Use chunked transfer */
+  PB_ByteStream,       /**< Specifiy content length */
+  PB_Chunk             /**< Dynamically change the transfer encoding according to the content length. */
 } TransferEncoding_t;
 
 /**
@@ -127,27 +127,7 @@ class PageElement {
 };
 
 /**
- * String stream class for http transfer-encoding:chunked
- */
-class PageStream : public Stream {
- public:
-  explicit PageStream(String& content) : _content(content), _pos(0) {}
-  virtual  ~PageStream() {}
-  virtual int   available() { return _content.length() - _pos; }
-  virtual int   read() { return _pos < _content.length() ? _content[_pos++] : -1; }
-  virtual int   peek() { return _pos < _content.length() ? _content[_pos] : -1; }
-  virtual void  flush() {}
-  virtual const String name() const { return ""; }
-  virtual const size_t size() const { return _content.length(); }
-  virtual size_t write(uint8_t c) { _content += static_cast<char>(c); return 1; }
-  virtual size_t readBytes(char *buffer, size_t length);
-
- private:
-  String& _content;
-  size_t  _pos;
-};
-
-/** PageElement container.
+ *  PageElement container.
  *  The PageBuilder class treats multiple PageElements constituting a html 
  *  page as a reference container as std::reference_wrapper.*/
 typedef std::vector<std::reference_wrapper<PageElement>>  PageElementVT;

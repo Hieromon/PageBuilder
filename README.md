@@ -197,7 +197,7 @@ PageBuilder::PageBuilder(const char* uri, PageElementVT element, HTTPMethod meth
   ```
 - `method` : Enum value of HTTP method as `HTTP_ANY`, `HTTP_GET`, `HTTP_POST` that page should respond.
 - `uri` : A URI string of the page.
-- `chunked` : Enumeration type for the transfer-encoding as TransferEncoding_t type. `PB_Chunked`, `PB_Through`, `PB_Auto` can be specified. If `PB_Auto` is specified, would be determined automatically to switch them the chunk. Its criteria is defined with `MAX_CONTENTBLOCK_LENGTH` macro in `PageBuilder.cpp` code.
+- `chunked` : Enumeration type for the transfer-encoding as TransferEncoding_t type. `PB_Auto`, `PB_ByteStream`, `PB_Chunk` can be specified. If `PB_Auto` is specified, would be determined automatically to switch them the chunk. Its criteria is defined with `MAX_CONTENTBLOCK_SIZE` macro in `PageBuilder.cpp` code. If `PB_ByteStream` is specified, PageBuilder will determine the way of sending either String writing or byte stream according to a size of the content.
 
 #### PageElement constructor
 ```c++

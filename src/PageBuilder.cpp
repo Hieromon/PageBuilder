@@ -9,13 +9,14 @@
  */
 
 #include "PageBuilder.h"
+#include "PageStream.h"
 #include <FS.h>
 #ifdef ARDUINO_ARCH_ESP32
 #include <SPIFFS.h>
 #endif
 
 // A maximum length of the content block to switch to chunked transfer.
-#define MAX_CONTENTBLOCK_LENGTH 6000
+#define MAX_CONTENTBLOCK_SIZE 1270
 
 /** 
  *  HTTP header structure.
@@ -98,22 +99,35 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
 
     // send http content to client
     if (!_cancel) {
-        int     contLen = content.length();
-        bool    _chunked = (_sendEnc == PB_Chunked);
+        bool    _chunked = (_sendEnc == PB_Chunk);
+        size_t  contLen = content.length();
+
         if (_sendEnc == PB_Auto) {
-            if (contLen >= MAX_CONTENTBLOCK_LENGTH)
+            if (contLen >= MAX_CONTENTBLOCK_SIZE)
                 _chunked = true;
         }
-        PB_DBG("Res: %d, Chunked: %d\n", code, _sendEnc);
-        PB_DBG("Free heap: %d, Sending length: %d\n", ESP.getFreeHeap(), contLen);
-        if (code == 200 && _chunked) {
-            PB_DBG("Transfer-Encoding: chunked\n");
-            PageStream  contStream(content);
-            server.streamFile(contStream, "text/html");
+        PB_DBG("Res:%d, Chunked:%d\n", code, _sendEnc);
+        PB_DBG("Free heap:%d, content len.:%d\n", ESP.getFreeHeap(), contLen);
+        if (_chunked) {
+            PB_DBG("Transfer-Encoding:chunked\n");
+            server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+            server.send(code, "text/html", "");
+            size_t  pos = 0;
+            while (pos < contLen) {
+                String contBuffer = content.substring(pos, pos + MAX_CONTENTBLOCK_SIZE); 
+                server.sendContent(contBuffer);
+                pos += MAX_CONTENTBLOCK_SIZE;
+            }
+            server.sendContent("");
         }
         else {
-            server.setContentLength(contLen);
-            server.send(code, "text/html", content);
+            if (_sendEnc == PB_ByteStream || contLen > MAX_CONTENTBLOCK_SIZE) {
+                PageStream  contStream(content);
+                server.streamFile(contStream, "text/html");
+            } else {
+                server.setContentLength(contLen);
+                server.send(code, "text/html", content);
+            }
         }
     }
     return true;
@@ -401,21 +415,4 @@ RequestArgument* PageArgument::item(int index) {
         return argList->_argument.get();
     else
         return nullptr;
-}
-
-/**
- *  Read into the buffer from the String.
- *  @param  buffer  A pointer of the buffer to be read string.
- *  @param  length  Maximum reading size.
- *  @return Number of bytes readed. 
- */
-size_t PageStream::readBytes(char *buffer, size_t length) {
-    size_t  count = 0;
-    while (count < length) {
-        if (_pos >= _content.length())
-            break;
-        *buffer++ = _content.charAt(_pos++);
-        count++;
-    }
-    return count;
 }
