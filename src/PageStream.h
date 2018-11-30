@@ -10,24 +10,24 @@
 #define _PAGESTREAM_H
 
 #include <Stream.h>
+#include <StreamString.h>
 
 /**
  * An implementation of a class with a Stream interface to pass an
  * instance of that class to ESP8266WebServer::streamFile.
  * @param content A reference of String which contains sending HTML.
  */
-class PageStream : public Stream {
+class PageStream : public StreamString {
  public:
   explicit PageStream(String& content) : _content(content), _pos(0) {}
-  virtual  ~PageStream() {}
-  virtual int   available() { return _content.length() - _pos; }
-  virtual int   read() { return _pos < _content.length() ? _content[_pos++] : -1; }
-  virtual int   peek() { return _pos < _content.length() ? _content[_pos] : -1; }
-  virtual void  flush() {}
-  virtual const String name() const { return ""; }
-  virtual const size_t size() const { return _content.length(); }
-  virtual size_t write(uint8_t c) { _content += static_cast<char>(c); return 1; }
-  virtual size_t readBytes(char *buffer, size_t length);
+  ~PageStream() {}
+  char          charAt(unsigned int loc) { return _content[loc]; }
+  unsigned char concat(char c) { return _content.concat(c); }
+  size_t        length() { return _content.length() - _pos; }
+  const String  name() const { return ""; }
+  size_t        readBytes(char *buffer, size_t length);
+  void          remove(unsigned int index, unsigned int count) { _content.remove(index, count); }
+  size_t        size() const { return _content.length(); }
 
  private:
   String& _content;
