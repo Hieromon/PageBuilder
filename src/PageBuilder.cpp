@@ -3,16 +3,20 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.1.0
- *  @date   2018-08-21
+ *  @version    1.2.0
+ *  @date   2018-12-01
  *  @copyright  MIT license.
  */
 
 #include "PageBuilder.h"
+#include "PageStream.h"
 #include <FS.h>
 #ifdef ARDUINO_ARCH_ESP32
 #include <SPIFFS.h>
 #endif
+
+// A maximum length of the content block to switch to chunked transfer.
+#define MAX_CONTENTBLOCK_SIZE 1270
 
 /** 
  *  HTTP header structure.
@@ -95,8 +99,36 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
 
     // send http content to client
     if (!_cancel) {
-        server.setContentLength(content.length());
-        server.send(code, "text/html", content);
+        bool    _chunked = (_sendEnc == PB_Chunk);
+        size_t  contLen = content.length();
+
+        if (_sendEnc == PB_Auto) {
+            if (contLen >= MAX_CONTENTBLOCK_SIZE)
+                _chunked = true;
+        }
+        PB_DBG("Res:%d, Chunked:%d\n", code, _sendEnc);
+        PB_DBG("Free heap:%d, content len.:%d\n", ESP.getFreeHeap(), contLen);
+        if (_chunked) {
+            PB_DBG("Transfer-Encoding:chunked\n");
+            server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+            server.send(code, "text/html", "");
+            size_t  pos = 0;
+            while (pos < contLen) {
+                String contBuffer = content.substring(pos, pos + MAX_CONTENTBLOCK_SIZE); 
+                server.sendContent(contBuffer);
+                pos += MAX_CONTENTBLOCK_SIZE;
+            }
+            server.sendContent("");
+        }
+        else {
+            if (_sendEnc == PB_ByteStream || contLen > MAX_CONTENTBLOCK_SIZE) {
+                PageStream  contStream(content);
+                server.streamFile(contStream, "text/html");
+            } else {
+                server.setContentLength(contLen);
+                server.send(code, "text/html", content);
+            }
+        }
     }
     return true;
 }
@@ -198,7 +230,7 @@ void PageElement::addToken(String token, HandleFuncT handler) {
     source._token = token;
     source._builder = handler;
     _source.push_back(source);
-};
+}
 
 /***
  *  @brief  Build html source.<br>
