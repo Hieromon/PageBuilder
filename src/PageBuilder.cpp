@@ -124,6 +124,7 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
             if (_sendEnc == PB_ByteStream || contLen > MAX_CONTENTBLOCK_SIZE) {
                 PageStream  contStream(content);
                 server.streamFile(contStream, "text/html");
+                server.client().flush();
             } else {
                 server.setContentLength(contLen);
                 server.send(code, "text/html", content);

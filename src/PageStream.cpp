@@ -20,7 +20,7 @@ size_t PageStream::readBytes(char *buffer, size_t length) {
     while (count < length) {
         if (_pos >= _content.length())
             break;
-        *buffer++ = _content.charAt(_pos++);
+        *buffer++ = _content[_pos++];
         count++;
     }
     return count;
