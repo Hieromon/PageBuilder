@@ -3,7 +3,7 @@ env:
   global:
     - IDE_VERSION=1.8.5
   matrix:
-    - BOARD="esp8266:esp8266:nodemcuv2:CpuFrequency=160,FlashSize=4M3M"
+    - BOARD="esp8266:esp8266:generic""
     - BOARD="esp32:esp32:esp32:FlashFreq=80,FlashSize=4M"
 before_install:
   - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16"
@@ -12,7 +12,7 @@ before_install:
   - wget http://downloads.arduino.cc/arduino-$IDE_VERSION-linux64.tar.xz
   - tar xf arduino-$IDE_VERSION-linux64.tar.xz
   - sudo mv arduino-$IDE_VERSION ~/arduino-ide
-  - export PATH=$PATH:~/arduino-ide
+  - export PATH=~/arduino-ide:$PATH
   - arduino --pref "boardsmanager.additional.urls=http://arduino.esp8266.com/stable/package_esp8266com_index.json,http://dl.espressif.com/dl/package_esp32_index.json" --save-prefs
   - if [[ "$BOARD" =~ "esp8266:esp8266:" ]]; then
       arduino --install-boards esp8266:esp8266;
