@@ -342,6 +342,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
+#### [1.2.1] 2018-12-18
+- Fixed 4-byte alignment of mold string in flash..
+
 #### [1.2.0] 2018-12-01
 - Fixed incomplete transmission of large HTML string. Chunked-encoding has been implemented accordingly.
 - Fix the destructor PageBuilder can be inherited.

@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.2.0
- *  @date   2018-12-01
+ *  @version    1.2.1
+ *  @date   2018-12-18
  *  @copyright  MIT license.
  */
 
@@ -256,7 +256,7 @@ String PageElement::build() {
 String PageElement::build(const char* mold, TokenVT tokenSource, PageArgument& args) {
     int     contextLength;
     int     scanIndex = 0;
-    String  templ = mold;
+    String  templ = FPSTR(mold);
     String  content = "";
 
     // Determining the origin of the mold.
