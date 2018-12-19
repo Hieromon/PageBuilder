@@ -10,3 +10,4 @@ img/
 *.vcxproj.filters
 .pioenvs
 .piolibdeps
+*.vcxitems
