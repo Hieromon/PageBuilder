@@ -253,11 +253,11 @@ String PageElement::build() {
  *  @retval A string containing the content of the token actually converted 
  *  by the user function.
  */
-String PageElement::build(const char* mold, TokenVT tokenSource, PageArgument& args) {
+const String PageElement::build(const char* mold, TokenVT tokenSource, PageArgument& args) {
     int     contextLength;
     int     scanIndex = 0;
     String  templ = FPSTR(mold);
-    String  content = "";
+    String  content = String("");
 
     // Determining the origin of the mold.
     // When the mold parameter has the prefix "file:", read the mold source

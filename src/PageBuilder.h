@@ -117,7 +117,7 @@ class PageElement {
   const char*   mold() { return _mold; }
   TokenVT       source() { return _source; }
   String        build();
-  static String build(const char* mold, TokenVT tokenSource, PageArgument& args);
+  static const  String build(const char* mold, TokenVT tokenSource, PageArgument& args);
   void          setMold(const char* mold) { _mold = mold; }
   void          addToken(String token, HandleFuncT handler);
 
