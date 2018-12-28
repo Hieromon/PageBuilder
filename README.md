@@ -342,6 +342,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
+#### [1.2.3] 2018-12-29
+- Fix leaking memory.
+
 #### [1.2.2] 2018-12-26
 - Fix losing built content.
  

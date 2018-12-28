@@ -203,9 +203,11 @@ String PageBuilder::build(PageArgument& args) {
     String content = "";
 
     for (uint8_t i = 0; i < _element.size(); i++) {
-        PageElement element = _element[i].get();
+        PageElement& element = _element[i].get();
         content += PageElement::build(element.mold(), element.source(), args);
     }
+    if (!content.length())
+      content = String(FPSTR("Insufficient memory"));
     return content;
 }
 
