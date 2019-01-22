@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.2.1
- *  @date   2018-12-18
+ *  @version    1.2.3
+ *  @date   2019-01-11
  *  @copyright  MIT license.
  */
 
@@ -200,7 +200,7 @@ String PageBuilder::build(void) {
  *  @retval A html content string.  
  */
 String PageBuilder::build(PageArgument& args) {
-    String content = "";
+    String content = String("");
 
     for (uint8_t i = 0; i < _element.size(); i++) {
         PageElement& element = _element[i].get();
@@ -271,7 +271,7 @@ const String PageElement::build(const char* mold, TokenVT tokenSource, PageArgum
             mf.close();
         }
         else
-            templ = "";
+            templ = String("");
     }
     contextLength = templ.length();
     while (contextLength > 0) {
