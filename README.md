@@ -1,5 +1,8 @@
 # PageBuilder - HTML assembly aid for ESP8266/ESP32 WebServer
-*An arduino library to create html string in the sketch for ESP8266/ESP32 WebServer.* [![Build Status](https://travis-ci.org/Hieromon/PageBuilder.svg?branch=master)](https://travis-ci.org/Hieromon/PageBuilder)
+[![Build Status](https://travis-ci.org/Hieromon/PageBuilder.svg?branch=master)](https://travis-ci.org/Hieromon/PageBuilder)
+[![arduino-library-badge](https://www.ardu-badge.com/badge/PageBuilder.svg)](https://www.ardu-badge.com/PageBuilder)
+
+*An arduino library to create html string in the sketch for ESP8266/ESP32 WebServer.* 
 
 PageBuilder is an Arduino library class dedicated to the _ESP8266WebServer_ or the _WebServer(ESP32)_ for easily generating HTML pages and sending them to the client.
 
@@ -342,8 +345,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
-#### [1.2.3] 2018-12-29
+#### [1.2.3] 2019-01-22
 - Fix leaking memory.
+- Add [ArduBadge](https://www.ardu-badge.com/PageBuilder).
 
 #### [1.2.2] 2018-12-26
 - Fix losing built content.
@@ -382,4 +386,4 @@ A stable version of [arduino-esp32 core](https://github.com/espressif/arduino-es
 ## License
 
 The PseudoPWM class is licensed under the [MIT License](LICENSE.md).  
-Copyright &copy; 2018 hieromon@gmail.com
+Copyright &copy; 2018-2019 hieromon@gmail.com
