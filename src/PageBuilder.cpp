@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.2.3
- *  @date   2019-01-11
+ *  @version    1.3.0
+ *  @date   2019-01-27
  *  @copyright  MIT license.
  */
 
@@ -174,7 +174,7 @@ void PageBuilder::sendNocacheHeader(WebServerClass& server) {
 
 /**
  *  Register the not found page to ESP8266Server.
- `  @param  server  A reference of ESP8266WebServer.
+ *  @param  server  A reference of ESP8266WebServer.
  */
 void PageBuilder::atNotFound(WebServerClass& server) {
     _server = &server;
@@ -183,13 +183,14 @@ void PageBuilder::atNotFound(WebServerClass& server) {
 
 /**
  *  A wrapper function for making response content without specifying the 
- *  parameter of http request.<br>
+ *  parameter of http request.
  *  This function is called from other than the On handle action of 
  *  ESP8266WebServer and assumes execution of content creation only by PageElement. 
  *  @retval String of content built by the instance of PageElement.
  */
 String PageBuilder::build(void) {
-    return build(*(new PageArgument()));
+    PageArgument    args;
+    return build(args);
 }
 
 /**
@@ -202,18 +203,29 @@ String PageBuilder::build(void) {
 String PageBuilder::build(PageArgument& args) {
     String content = String("");
 
+    if (_rSize)
+        if (!content.reserve(_rSize)) {
+            PB_DBG("Content buffer cannot reserve(%ld)\n", (int32_t)_rSize);
+        }
+
     for (uint8_t i = 0; i < _element.size(); i++) {
         PageElement& element = _element[i].get();
-        content += PageElement::build(element.mold(), element.source(), args);
+        String segment = PageElement::build(element.mold(), element.source(), args);
+        if (segment.length()) {
+            if (!content.concat(segment)) {
+                PB_DBG("Content lost, length:%d\n", segment.length());
+                PB_DBG("Free heap:%d\n", ESP.getFreeHeap());
+            }
+        }
     }
     if (!content.length())
-      content = String(FPSTR("Insufficient memory"));
+      content = String(F("Insufficient memory"));
     return content;
 }
 
 // PageElement class methods.
 
-/***
+/**
  *  PageElement destructor
  */
 PageElement::~PageElement() {
@@ -228,7 +240,7 @@ PageElement::~PageElement() {
  *  @param  token   A token string.
  *  @param  handler A handler function. 
  */
-void PageElement::addToken(String token, HandleFuncT handler) {
+void PageElement::addToken(const String& token, HandleFuncT handler) {
     TokenSourceST  source = TokenSourceST();
     source._token = token;
     source._builder = handler;
@@ -241,7 +253,8 @@ void PageElement::addToken(String token, HandleFuncT handler) {
  *  @retval A string generated from the mold of this instance.
  */
 String PageElement::build() {
-    return PageElement::build(_mold, _source, *(new PageArgument()));
+    PageArgument    args;
+    return String(PageElement::build(_mold, _source, args));
 }
 
 /**
@@ -255,7 +268,7 @@ String PageElement::build() {
  *  @retval A string containing the content of the token actually converted 
  *  by the user function.
  */
-const String PageElement::build(const char* mold, TokenVT tokenSource, PageArgument& args) {
+String PageElement::build(const char* mold, TokenVT tokenSource, PageArgument& args) {
     int     contextLength;
     int     scanIndex = 0;
     String  templ = FPSTR(mold);
@@ -274,6 +287,7 @@ const String PageElement::build(const char* mold, TokenVT tokenSource, PageArgum
             templ = String("");
     }
     contextLength = templ.length();
+    bool grown;
     while (contextLength > 0) {
         String token;
         int tokenStart, tokenEnd;
@@ -290,17 +304,26 @@ const String PageElement::build(const char* mold, TokenVT tokenSource, PageArgum
             tokenStart = tokenEnd = templ.length();
         }
         // Materialize the template which would be stored to content
-        content += templ.substring(scanIndex, tokenStart);
-        scanIndex = tokenEnd + 2;
-        contextLength = templ.length() - scanIndex;
+        // content += templ.substring(scanIndex, tokenStart);
+        grown = content.concat(templ.substring(scanIndex, tokenStart));
+        if (grown) {
+            scanIndex = tokenEnd + 2;
+            contextLength = templ.length() - scanIndex;
 
-        // Invoke the callback function corresponding to the extracted token
-        for (uint8_t i = 0; i < tokenSource.size(); ++i)
-            if (tokenSource[i]._token == token) {
-                content += tokenSource[i]._builder(args);
-                break;
-            }
+            // Invoke the callback function corresponding to the extracted token
+            for (uint8_t i = 0; i < tokenSource.size(); ++i)
+                if (tokenSource[i]._token == token) {
+                    grown = content.concat(tokenSource[i]._builder(args));
+                    break;
+                }
+        }
+        if (!grown) {
+            PB_DBG("Failed building, free heap:%ld\n", ESP.getFreeHeap());
+            break;
+        }
     }
+
+    PB_DBG("at leaving build: %ld free\n", ESP.getFreeHeap());
     return content;
 }
 
@@ -311,7 +334,7 @@ const String PageElement::build(const char* mold, TokenVT tokenSource, PageArgum
  *  @param  name    A parameter argument name.
  *  @retval A parameter value string.
  */
-String PageArgument::arg(String name) {
+String PageArgument::arg(const String& name) {
     for (uint8_t i = 0; i < size(); i++) {
         RequestArgument*    argItem = item(i);
         if (argItem->_key == name)
@@ -366,7 +389,7 @@ int PageArgument::args() {
  *  @retval true    This http request contains parameter(s).
  *  @retval false   This http request has no parameter.
  */
-bool PageArgument::hasArg(String name) {
+bool PageArgument::hasArg(const String& name) {
     for (uint8_t i = 0; i < size(); i++) {
         RequestArgument*    argument = item(i);
         if (argument == nullptr)
@@ -383,7 +406,7 @@ bool PageArgument::hasArg(String name) {
  *  @param  key     A parameter name string.
  *  @param  value   A parameter value string.
  */
-void PageArgument::push(String key, String value) {
+void PageArgument::push(const String& key, const String& value) {
     RequestArgument*    newArg = new RequestArgument();
     newArg->_key = key;
     newArg->_value = value;

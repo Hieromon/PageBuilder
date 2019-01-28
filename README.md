@@ -294,6 +294,10 @@ Get URI of this page.
 Set Transfer-Encoding with chunked, or not.
 - `chunked` : Enumeration type for the transfer-encoding.
 
+#### `void PageBuilder::reserve(size_t size)`
+Set buffer size for reserved content building buffer.
+- `size` : Reservation size. If you do not specify a reserved buffer size by this function, the buffer for the build function will not be reserved. As a result, memory insufficient is likely to occur due to fragmentation.
+
 ### PageElement methods
 
 #### `const char* PageElement::mold()`  
@@ -344,6 +348,9 @@ The function would be called twice at one http request. The cause is the interna
 
 
 ## Change log
+
+#### [1.3.0] 2019-01-29
+- Adds building buffer reservation option to avoid built content lost.
 
 #### [1.2.3] 2019-01-22
 - Fix leaking memory.

@@ -2,8 +2,8 @@
  *  Declaration of PaguBuilder class and accompanying PageElement, PageArgument class.
  *  @file PageBuilder.h
  *  @author hieromon@gmail.com
- *  @version  1.2.0
- *  @date 2018-12-01
+ *  @version  1.3.0
+ *  @date 2019-01-27
  *  @copyright  MIT license.
  */
 
@@ -64,15 +64,15 @@ typedef enum {
 class PageArgument {
  public:
   PageArgument() : _arguments(nullptr) {}
-  PageArgument(String key, String value) : _arguments(nullptr) { push(key, value); }
+  PageArgument(const String& key, const String& value) : _arguments(nullptr) { push(key, value); }
   ~PageArgument() {}
-  String  arg(String name);
+  String  arg(const String& name);
   String  arg(int i);
   String  argName(int i);
-  int   args();
-  size_t  size() { return (size_t)args(); }
-  bool  hasArg(String name);
-  void  push(String key, String value);
+  int   args(void);
+  size_t  size(void) { return (size_t)args(); }
+  bool  hasArg(const String& name);
+  void  push(const String& key, const String& value);
 
  protected:
   /** RequestArgument element list structure */
@@ -114,12 +114,12 @@ class PageElement {
   PageElement(const char* mold, TokenVT source) : _mold(mold), _source(source) {}
   virtual ~PageElement();
 
-  const char*   mold() { return _mold; }
-  TokenVT       source() { return _source; }
-  String        build();
-  static const  String build(const char* mold, TokenVT tokenSource, PageArgument& args);
+  const char*   mold(void) { return _mold; }
+  TokenVT       source(void) { return _source; }
+  String        build(void);
+  static String build(const char* mold, TokenVT tokenSource, PageArgument& args);
   void          setMold(const char* mold) { _mold = mold; }
-  void          addToken(String token, HandleFuncT handler);
+  void          addToken(const String& token, HandleFuncT handler);
 
  protected:
   const char* _mold;    //*< A pointer to HTML model string(char array). */
@@ -152,6 +152,7 @@ class PageBuilder : public RequestHandler {
     _noCache(noCache),
     _cancel(cancel),
     _sendEnc(chunked),
+    _rSize(0),
     _server(nullptr),
     _canHandle(nullptr) {}
   PageBuilder(const char* uri, PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = PB_Auto) :
@@ -161,6 +162,7 @@ class PageBuilder : public RequestHandler {
     _noCache(noCache),
     _cancel(cancel),
     _sendEnc(chunked),
+    _rSize(0),
     _server(nullptr),
     _canHandle(nullptr) {}
 
@@ -183,6 +185,7 @@ class PageBuilder : public RequestHandler {
   void exitCanHandle(PrepareFuncT prepareFunc) { _canHandle = prepareFunc; }
   void cancel() { _cancel = true; }
   void chunked(const TransferEncoding_t devide) { _sendEnc = devide; }
+  void reserve(size_t size) { _rSize = size; }
 
  protected:
   const char*   _uri;       /**< uri of this page */
@@ -190,10 +193,11 @@ class PageBuilder : public RequestHandler {
   HTTPMethod    _method;    /**< Method of http request to which this page applies. */
 
  private:
-  bool  _sink(int code, WebServerClass& server);  /**< send Content */
-  bool  _noCache;                 /**< A flag for must-revalidate cache control response */
-  bool  _cancel;                  /**< Automatic send cancellation */
+  bool    _sink(int code, WebServerClass& server);  /**< send Content */
+  bool    _noCache;               /**< A flag for must-revalidate cache control response */
+  bool    _cancel;                /**< Automatic send cancellation */
   TransferEncoding_t  _sendEnc;   /**< Use chunked sending */
+  size_t  _rSize;                 /**< Reserved buffer size for content building */
   WebServerClass* _server;
   PrepareFuncT  _canHandle;       /**< 'canHanlde' user owned function */
 };
