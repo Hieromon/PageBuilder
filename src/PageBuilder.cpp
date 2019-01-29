@@ -203,7 +203,7 @@ String PageBuilder::build(void) {
 String PageBuilder::build(PageArgument& args) {
     String content = String("");
 
-    if (_rSize)
+    if (_rSize > 0)
         if (!content.reserve(_rSize)) {
             PB_DBG("Content buffer cannot reserve(%ld)\n", (int32_t)_rSize);
         }
@@ -218,8 +218,6 @@ String PageBuilder::build(PageArgument& args) {
             }
         }
     }
-    if (!content.length())
-      content = String(F("Insufficient memory"));
     return content;
 }
 
