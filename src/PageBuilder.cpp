@@ -130,6 +130,10 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
                 server.send(code, "text/html", content);
             }
         }
+        while (server.client().connected()) {
+            delay(1);
+            yield();
+        }
     }
     return true;
 }
@@ -285,7 +289,6 @@ String PageElement::build(const char* mold, TokenVT tokenSource, PageArgument& a
             templ = String("");
     }
     contextLength = templ.length();
-    bool grown;
     while (contextLength > 0) {
         String token;
         int tokenStart, tokenEnd;
@@ -303,7 +306,7 @@ String PageElement::build(const char* mold, TokenVT tokenSource, PageArgument& a
         }
         // Materialize the template which would be stored to content
         // content += templ.substring(scanIndex, tokenStart);
-        grown = content.concat(templ.substring(scanIndex, tokenStart));
+        bool grown = content.concat(templ.substring(scanIndex, tokenStart));
         if (grown) {
             scanIndex = tokenEnd + 2;
             contextLength = templ.length() - scanIndex;
