@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.3.0
- *  @date   2019-01-27
+ *  @version    1.3.1
+ *  @date   2019-02-04
  *  @copyright  MIT license.
  */
 
@@ -129,10 +129,12 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
                 server.setContentLength(contLen);
                 server.send(code, "text/html", content);
             }
-        }
-        while (server.client().connected()) {
-            delay(1);
-            yield();
+            // Waiting for the connection close is for only PB_Bytestream.
+            // Related to an issue #33 of AutoConnect.
+            while (server.client().connected()) {
+                delay(1);
+                yield();
+            }
         }
     }
     return true;
@@ -208,7 +210,10 @@ String PageBuilder::build(PageArgument& args) {
     String content = String("");
 
     if (_rSize > 0)
-        if (!content.reserve(_rSize)) {
+        if (content.reserve(_rSize)) {
+            PB_DBG("Content buffer %ld reserved\n", (int32_t)_rSize);
+        }
+        else {
             PB_DBG("Content buffer cannot reserve(%ld)\n", (int32_t)_rSize);
         }
 

@@ -2,8 +2,8 @@
  *  Declaration of PaguBuilder class and accompanying PageElement, PageArgument class.
  *  @file PageBuilder.h
  *  @author hieromon@gmail.com
- *  @version  1.3.0
- *  @date 2019-01-27
+ *  @version  1.3.1
+ *  @date 2019-02-04
  *  @copyright  MIT license.
  */
 
@@ -144,7 +144,7 @@ typedef std::function<bool(HTTPMethod, String)> PrepareFuncT;
  */
 class PageBuilder : public RequestHandler {
  public:
-  PageBuilder() : _uri(nullptr), _method(HTTP_ANY), _noCache(true), _cancel(false), _sendEnc(PB_Auto), _server(nullptr), _canHandle(nullptr) {}
+  PageBuilder() : _uri(nullptr), _method(HTTP_ANY), _noCache(true), _cancel(false), _sendEnc(PB_Auto), _rSize(0), _server(nullptr), _canHandle(nullptr) {}
   explicit PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = PB_Auto) :
     _uri(nullptr),
     _element(element),

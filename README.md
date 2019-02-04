@@ -349,6 +349,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
+#### [1.3.1] 2019-02-04
+- Fixed the captive portal not appear.
+
 #### [1.3.0] 2019-01-29
 - Adds building buffer reservation option to avoid built content lost.
 
