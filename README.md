@@ -349,6 +349,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
+#### [1.3.2] 2019-02-07
+- Supports AutoConnect v0.9.7.
+
 #### [1.3.1] 2019-02-04
 - Fixed the captive portal not appear.
 

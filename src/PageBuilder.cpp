@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.3.1
- *  @date   2019-02-04
+ *  @version    1.3.2
+ *  @date   2019-02-07
  *  @copyright  MIT license.
  */
 
@@ -111,29 +111,23 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
         if (_chunked) {
             PB_DBG("Transfer-Encoding:chunked\n");
             server.setContentLength(CONTENT_LENGTH_UNKNOWN);
-            server.send(code, "text/html", "");
+            server.send(code, F("text/html"), _emptyString);
             size_t  pos = 0;
             while (pos < contLen) {
                 String contBuffer = content.substring(pos, pos + MAX_CONTENTBLOCK_SIZE); 
                 server.sendContent(contBuffer);
                 pos += MAX_CONTENTBLOCK_SIZE;
             }
-            server.sendContent("");
+            server.sendContent(_emptyString);
         }
         else {
             if (_sendEnc == PB_ByteStream || contLen > MAX_CONTENTBLOCK_SIZE) {
                 PageStream  contStream(content);
-                server.streamFile(contStream, "text/html");
+                server.streamFile(contStream, F("text/html"));
                 server.client().flush();
             } else {
                 server.setContentLength(contLen);
-                server.send(code, "text/html", content);
-            }
-            // Waiting for the connection close is for only PB_Bytestream.
-            // Related to an issue #33 of AutoConnect.
-            while (server.client().connected()) {
-                delay(1);
-                yield();
+                server.send(code, F("text/html"), content);
             }
         }
     }
@@ -209,13 +203,14 @@ String PageBuilder::build(void) {
 String PageBuilder::build(PageArgument& args) {
     String content = String("");
 
-    if (_rSize > 0)
+    if (_rSize > 0) {
         if (content.reserve(_rSize)) {
-            PB_DBG("Content buffer %ld reserved\n", (int32_t)_rSize);
+            PB_DBG("Content buffer %ld reserved\n", (long)_rSize);
         }
         else {
-            PB_DBG("Content buffer cannot reserve(%ld)\n", (int32_t)_rSize);
+            PB_DBG("Content buffer cannot reserve(%ld)\n", (long)_rSize);
         }
+    }
 
     for (uint8_t i = 0; i < _element.size(); i++) {
         PageElement& element = _element[i].get();
@@ -223,12 +218,17 @@ String PageBuilder::build(PageArgument& args) {
         if (segment.length()) {
             if (!content.concat(segment)) {
                 PB_DBG("Content lost, length:%d\n", segment.length());
-                PB_DBG("Free heap:%d\n", ESP.getFreeHeap());
+                PB_DBG("Free heap:%ld\n", (long)ESP.getFreeHeap());
             }
         }
     }
     return content;
 }
+
+/**
+ *  Initialize an empty string to allow returning const String& with nothing.
+ */
+const String PageBuilder::_emptyString = String("");
 
 // PageElement class methods.
 
@@ -324,12 +324,12 @@ String PageElement::build(const char* mold, TokenVT tokenSource, PageArgument& a
                 }
         }
         if (!grown) {
-            PB_DBG("Failed building, free heap:%ld\n", ESP.getFreeHeap());
+            PB_DBG("Failed building, free heap:%ld\n", (long)ESP.getFreeHeap());
             break;
         }
     }
 
-    PB_DBG("at leaving build: %ld free\n", ESP.getFreeHeap());
+    PB_DBG("at leaving build: %ld free\n", (long)ESP.getFreeHeap());
     return content;
 }
 

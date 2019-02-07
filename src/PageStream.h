@@ -2,8 +2,8 @@
  *  Declaration of PaguStream class.
  *  @file PageStream.h
  *  @author hieromon@gmail.com
- *  @version  1.2.0
- *  @date 2018-12-01
+ *  @version  1.3.2
+ *  @date 2019-02-07
  *  @copyright  MIT license.
  */
 #ifndef _PAGESTREAM_H
@@ -23,7 +23,7 @@ class PageStream : public Stream {
   virtual ~PageStream() {}
   virtual int    available() { return _content.length() - _pos; }
   virtual void   flush() {}
-  virtual const String name() const { return ""; }
+  virtual const String& name() const { static const String _empty; return _empty; }
   virtual int    peek() { return _pos < _content.length() ? _content[_pos] : -1; }
   virtual int    read() { return _pos < _content.length() ? _content[_pos++] : -1; }
   virtual size_t readBytes(char* buffer, size_t length);
