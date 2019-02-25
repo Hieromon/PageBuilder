@@ -2,8 +2,8 @@
  *  Declaration of PaguBuilder class and accompanying PageElement, PageArgument class.
  *  @file PageBuilder.h
  *  @author hieromon@gmail.com
- *  @version  1.3.1
- *  @date 2019-02-04
+ *  @version  1.3.2
+ *  @date 2019-02-07
  *  @copyright  MIT license.
  */
 
@@ -200,6 +200,7 @@ class PageBuilder : public RequestHandler {
   size_t  _rSize;                 /**< Reserved buffer size for content building */
   WebServerClass* _server;
   PrepareFuncT  _canHandle;       /**< 'canHanlde' user owned function */
+  static const String _emptyString;
 };
 
 #endif
