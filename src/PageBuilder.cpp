@@ -71,6 +71,7 @@ bool PageBuilder::canHandle(HTTPMethod requestMethod, String requestUri) {
  *  @retval false   This page cannot receive the upload request.
  */
 bool PageBuilder::canUpload(String requestUri) {
+    (void)(requestUri);
     return false;
 }
 

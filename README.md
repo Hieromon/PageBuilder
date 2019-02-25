@@ -23,7 +23,7 @@ Ordinary sketch | Sketch by PageBuilder
 ## Works on
 
 - For ESP8266  
-Generic esp8266 module and other representatives works fine. ESP8266 Arduino core 2.3.0 or higher is necessary. 
+Generic esp8266 module and other representatives works fine. ESP8266 Arduino core 2.4.0 or higher is necessary. 
 - For ESP32  
 Arduino core for ESP32 supported boards works fine. ESP32 Arduino core 1.0.0 or higher is necessary.
 

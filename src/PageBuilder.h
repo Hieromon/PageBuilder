@@ -31,7 +31,7 @@ using WebServerClass = WebServer;
 #endif
 
 // Uncomment the following PB_DEBUG to enable debug output.
-#define PB_DEBUG
+//#define PB_DEBUG
 
 // Debug output destination can be defined externally with PB_DEBUG_PORT
 #ifndef PB_DEBUG_PORT
