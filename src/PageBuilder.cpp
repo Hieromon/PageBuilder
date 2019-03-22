@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.3.2
- *  @date   2019-02-07
+ *  @version    1.3.3
+ *  @date   2019-03-11
  *  @copyright  MIT license.
  */
 
@@ -70,9 +70,24 @@ bool PageBuilder::canHandle(HTTPMethod requestMethod, String requestUri) {
  *  @param  requestUri  The uri of this upload request.
  *  @retval false   This page cannot receive the upload request.
  */
-bool PageBuilder::canUpload(String requestUri) {
-    (void)(requestUri);
-    return false;
+bool PageBuilder::canUpload(String uri) {
+    PB_DBG("%s upload request\n", uri.c_str());
+    if (!_upload || !canHandle(HTTP_POST, uri))
+        return false;
+    return true;
+}
+
+/**
+ *  Invokes a user sketch function which would be registered by the
+ *  onUpload function to process the received upload data.
+ *  @param  server      A reference of ESP8266WebServer.
+ *  @param  requestUri  Request uri of this time.
+ *  @param  upload      A reference of the context of the HTTPUpload structure. 
+ */
+void PageBuilder::upload(WebServerClass& server, String requestUri, HTTPUpload& upload) {
+    (void)server;
+    if (canUpload(requestUri))
+        _upload(requestUri, upload);
 }
 
 /**
@@ -135,6 +150,15 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
     return true;
 }
 
+/**
+ *  The page builder handler generates HTML based on PageElement and sends
+ *  it to the client.
+ *  @param  server          A reference of ESP8266WebServer.
+ *  @param  requestMethod   Method of http request that originated this response.
+ *  @param  requestUri      Request uri of this time.
+ *  @retval true    A response send.
+ *  @retval false   This request could not handled.
+ */
 bool PageBuilder::handle(WebServerClass& server, HTTPMethod requestMethod, String requestUri) {
     // Screening the available request
     if (!canHandle(requestMethod, requestUri))
