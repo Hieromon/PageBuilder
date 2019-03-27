@@ -118,12 +118,12 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
         size_t  contLen;
         bool    _chunked = (_sendEnc == PB_Chunk);
 
-        if (_sendEnc == PB_Auto) {
+        if (_sendEnc == PB_ByteStream || _sendEnc == PB_Auto) {
             // Build the content, and determine the transfer mode by
             // the length of the built content.
             content = build(args);
             contLen = content.length();
-            if (contLen >= MAX_CONTENTBLOCK_SIZE)
+            if (_sendEnc == PB_Auto && contLen >= MAX_CONTENTBLOCK_SIZE)
                 _chunked = true;
         }
         PB_DBG("Free heap:%d, content len.:", ESP.getFreeHeap());
@@ -132,16 +132,28 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
         else
             PB_DBG_DUMB("%d\n", contLen);
         PB_DBG("Res:%d, Chunked:%d\n", code, _sendEnc);
+        // Start content transfer, switch the transfer method depending
+        // on whether it is chunked transfer or byte stream.
         if (_chunked) {
             PB_DBG("Transfer-Encoding:chunked\n");
             server.setContentLength(CONTENT_LENGTH_UNKNOWN);
             server.send(code, F("text/html"), _emptyString);
-            // Chunk block is a PageElement unit.
-            for (uint8_t i = 0; i < _element.size(); i++) {
-                PageElement& element = _element[i].get();
-                content = PageElement::build(element.mold(), element.source(), args);
-                if (content.length()) {
-                    server.sendContent(content);
+            if (PB_Chunk) {
+                // Chunk block is a PageElement unit.
+                for (uint8_t i = 0; i < _element.size(); i++) {
+                    PageElement& element = _element[i].get();
+                    content = PageElement::build(element.mold(), element.source(), args);
+                    if (content.length())
+                        server.sendContent(content);
+                }
+            }
+            else {
+                // Here, PB_Auto turned to chunk mode.
+                size_t  pos = 0;
+                while (pos < contLen) {
+                    String contBuffer = content.substring(pos, pos + MAX_CONTENTBLOCK_SIZE); 
+                    server.sendContent(contBuffer);
+                    pos += MAX_CONTENTBLOCK_SIZE;
                 }
             }
             server.sendContent(_emptyString);
