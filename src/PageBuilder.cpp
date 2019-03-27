@@ -107,7 +107,6 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
 
     // Invoke page building function
     _cancel = false;
-    String content = build(args);
 
     // If the page is must-revalidate, send a header
     if (_noCache)
@@ -115,24 +114,35 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
 
     // send http content to client
     if (!_cancel) {
+        String  content;                // Content is available only in a NOT _cancel block
+        size_t  contLen;
         bool    _chunked = (_sendEnc == PB_Chunk);
-        size_t  contLen = content.length();
 
         if (_sendEnc == PB_Auto) {
+            // Build the content, and determine the transfer mode by
+            // the length of the built content.
+            content = build(args);
+            contLen = content.length();
             if (contLen >= MAX_CONTENTBLOCK_SIZE)
                 _chunked = true;
         }
+        PB_DBG("Free heap:%d, content len.:", ESP.getFreeHeap());
+        if (_chunked)
+            PB_DBG_DUMB("%s\n", "unknown");
+        else
+            PB_DBG_DUMB("%d\n", contLen);
         PB_DBG("Res:%d, Chunked:%d\n", code, _sendEnc);
-        PB_DBG("Free heap:%d, content len.:%d\n", ESP.getFreeHeap(), contLen);
         if (_chunked) {
             PB_DBG("Transfer-Encoding:chunked\n");
             server.setContentLength(CONTENT_LENGTH_UNKNOWN);
             server.send(code, F("text/html"), _emptyString);
-            size_t  pos = 0;
-            while (pos < contLen) {
-                String contBuffer = content.substring(pos, pos + MAX_CONTENTBLOCK_SIZE); 
-                server.sendContent(contBuffer);
-                pos += MAX_CONTENTBLOCK_SIZE;
+            // Chunk block is a PageElement unit.
+            for (uint8_t i = 0; i < _element.size(); i++) {
+                PageElement& element = _element[i].get();
+                content = PageElement::build(element.mold(), element.source(), args);
+                if (content.length()) {
+                    server.sendContent(content);
+                }
             }
             server.sendContent(_emptyString);
         }
@@ -242,8 +252,7 @@ String PageBuilder::build(PageArgument& args) {
         String segment = PageElement::build(element.mold(), element.source(), args);
         if (segment.length()) {
             if (!content.concat(segment)) {
-                PB_DBG("Content lost, length:%d\n", segment.length());
-                PB_DBG("Free heap:%ld\n", (long)ESP.getFreeHeap());
+                PB_DBG("Content lost, length:%d, free heap:%ld\n", segment.length(), (long)ESP.getFreeHeap());
             }
         }
     }

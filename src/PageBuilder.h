@@ -31,13 +31,14 @@ using WebServerClass = WebServer;
 #endif
 
 // Uncomment the following PB_DEBUG to enable debug output.
-//#define PB_DEBUG
+#define PB_DEBUG
 
 // Debug output destination can be defined externally with PB_DEBUG_PORT
 #ifndef PB_DEBUG_PORT
 #define PB_DEBUG_PORT Serial
 #endif // !PB_DEBUG_PORT
 #ifdef PB_DEBUG
+#define PB_DBG_DUMB(...) do {PB_DEBUG_PORT.printf( __VA_ARGS__ );} while (0)
 #define PB_DBG(...) do {PB_DEBUG_PORT.print("[PB] "); PB_DEBUG_PORT.printf( __VA_ARGS__ );} while (0)
 #else
 #define PB_DBG(...)
