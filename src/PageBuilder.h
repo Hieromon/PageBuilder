@@ -2,8 +2,8 @@
  *  Declaration of PaguBuilder class and accompanying PageElement, PageArgument class.
  *  @file PageBuilder.h
  *  @author hieromon@gmail.com
- *  @version  1.3.2
- *  @date 2019-02-07
+ *  @version  1.3.3
+ *  @date 2019-03-11
  *  @copyright  MIT license.
  */
 
@@ -31,13 +31,14 @@ using WebServerClass = WebServer;
 #endif
 
 // Uncomment the following PB_DEBUG to enable debug output.
-//#define PB_DEBUG
+#define PB_DEBUG
 
 // Debug output destination can be defined externally with PB_DEBUG_PORT
 #ifndef PB_DEBUG_PORT
 #define PB_DEBUG_PORT Serial
 #endif // !PB_DEBUG_PORT
 #ifdef PB_DEBUG
+#define PB_DBG_DUMB(...) do {PB_DEBUG_PORT.printf( __VA_ARGS__ );} while (0)
 #define PB_DBG(...) do {PB_DEBUG_PORT.print("[PB] "); PB_DEBUG_PORT.printf( __VA_ARGS__ );} while (0)
 #else
 #define PB_DBG(...)
@@ -54,7 +55,7 @@ typedef struct _RequestArgumentS {
 /** Transfer encoding type with ESP8266WebSever::sendcontent */
 typedef enum {
   PB_Auto,             /**< Use chunked transfer */
-  PB_ByteStream,       /**< Specifiy content length */
+  PB_ByteStream,       /**< Specify content length */
   PB_Chunk             /**< Dynamically change the transfer encoding according to the content length. */
 } TransferEncoding_t;
 
@@ -132,7 +133,7 @@ class PageElement {
  *  page as a reference container as std::reference_wrapper.*/
 typedef std::vector<std::reference_wrapper<PageElement>>  PageElementVT;
 
-/** The user own function for the current uri handling preparation. */
+/** The type of user-owned function for preparing the handling of current URI. */
 typedef std::function<bool(HTTPMethod, String)> PrepareFuncT;
 
 /**
@@ -144,11 +145,12 @@ typedef std::function<bool(HTTPMethod, String)> PrepareFuncT;
  */
 class PageBuilder : public RequestHandler {
  public:
-  PageBuilder() : _uri(nullptr), _method(HTTP_ANY), _noCache(true), _cancel(false), _sendEnc(PB_Auto), _rSize(0), _server(nullptr), _canHandle(nullptr) {}
+  PageBuilder() : _uri(nullptr), _method(HTTP_ANY), _upload(nullptr), _noCache(true), _cancel(false), _sendEnc(PB_Auto), _rSize(0), _server(nullptr), _canHandle(nullptr) {}
   explicit PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = PB_Auto) :
     _uri(nullptr),
     _element(element),
     _method(method),
+    _upload(nullptr),
     _noCache(noCache),
     _cancel(cancel),
     _sendEnc(chunked),
@@ -159,6 +161,7 @@ class PageBuilder : public RequestHandler {
     _uri(uri),
     _element(element),
     _method(method),
+    _upload(nullptr),
     _noCache(noCache),
     _cancel(cancel),
     _sendEnc(chunked),
@@ -168,9 +171,13 @@ class PageBuilder : public RequestHandler {
 
   virtual ~PageBuilder() { _uri = nullptr; _server = nullptr; clearElement(); }
 
-  bool canHandle(HTTPMethod requestMethod, String requestUri) override;
-  bool canUpload(String requestUri) override;
+  /** The type of user-owned function for uploading. */
+  typedef std::function<void(const String&, const HTTPUpload&)> UploadFuncT;
+
+  virtual bool canHandle(HTTPMethod requestMethod, String requestUri) override;
+  virtual bool canUpload(String uri) override;
   bool handle(WebServerClass& server, HTTPMethod requestMethod, String requestUri) override;
+  virtual void upload(WebServerClass& server, String requestUri, HTTPUpload& upload) override;
 
   void setUri(const char* uri) { _uri = uri; }
   const char* uri() { return _uri; }
@@ -183,6 +190,7 @@ class PageBuilder : public RequestHandler {
   void atNotFound(WebServerClass& server);
   void exit404(void);
   void exitCanHandle(PrepareFuncT prepareFunc) { _canHandle = prepareFunc; }
+  virtual void onUpload(UploadFuncT uploadFunc) { _upload = uploadFunc; }
   void cancel() { _cancel = true; }
   void chunked(const TransferEncoding_t devide) { _sendEnc = devide; }
   void reserve(size_t size) { _rSize = size; }
@@ -191,6 +199,7 @@ class PageBuilder : public RequestHandler {
   const char*   _uri;       /**< uri of this page */
   PageElementVT _element;   /**< PageElement container */
   HTTPMethod    _method;    /**< Method of http request to which this page applies. */
+  UploadFuncT   _upload;    /**< 'upload' user owned function */
 
  private:
   bool    _sink(int code, WebServerClass& server);  /**< send Content */
@@ -200,6 +209,7 @@ class PageBuilder : public RequestHandler {
   size_t  _rSize;                 /**< Reserved buffer size for content building */
   WebServerClass* _server;
   PrepareFuncT  _canHandle;       /**< 'canHanlde' user owned function */
+
   static const String _emptyString;
 };
 

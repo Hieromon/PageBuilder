@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.3.2
- *  @date   2019-02-07
+ *  @version    1.3.3
+ *  @date   2019-03-11
  *  @copyright  MIT license.
  */
 
@@ -70,9 +70,24 @@ bool PageBuilder::canHandle(HTTPMethod requestMethod, String requestUri) {
  *  @param  requestUri  The uri of this upload request.
  *  @retval false   This page cannot receive the upload request.
  */
-bool PageBuilder::canUpload(String requestUri) {
-    (void)(requestUri);
-    return false;
+bool PageBuilder::canUpload(String uri) {
+    PB_DBG("%s upload request\n", uri.c_str());
+    if (!_upload || !canHandle(HTTP_POST, uri))
+        return false;
+    return true;
+}
+
+/**
+ *  Invokes a user sketch function which would be registered by the
+ *  onUpload function to process the received upload data.
+ *  @param  server      A reference of ESP8266WebServer.
+ *  @param  requestUri  Request uri of this time.
+ *  @param  upload      A reference of the context of the HTTPUpload structure. 
+ */
+void PageBuilder::upload(WebServerClass& server, String requestUri, HTTPUpload& upload) {
+    (void)server;
+    if (canUpload(requestUri))
+        _upload(requestUri, upload);
 }
 
 /**
@@ -92,7 +107,6 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
 
     // Invoke page building function
     _cancel = false;
-    String content = build(args);
 
     // If the page is must-revalidate, send a header
     if (_noCache)
@@ -100,24 +114,47 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
 
     // send http content to client
     if (!_cancel) {
+        String  content;                // Content is available only in a NOT _cancel block
+        size_t  contLen;
         bool    _chunked = (_sendEnc == PB_Chunk);
-        size_t  contLen = content.length();
 
-        if (_sendEnc == PB_Auto) {
-            if (contLen >= MAX_CONTENTBLOCK_SIZE)
+        if (_sendEnc == PB_ByteStream || _sendEnc == PB_Auto) {
+            // Build the content, and determine the transfer mode by
+            // the length of the built content.
+            content = build(args);
+            contLen = content.length();
+            if (_sendEnc == PB_Auto && contLen >= MAX_CONTENTBLOCK_SIZE)
                 _chunked = true;
         }
+        PB_DBG("Free heap:%d, content len.:", ESP.getFreeHeap());
+        if (_chunked)
+            PB_DBG_DUMB("%s\n", "unknown");
+        else
+            PB_DBG_DUMB("%d\n", contLen);
         PB_DBG("Res:%d, Chunked:%d\n", code, _sendEnc);
-        PB_DBG("Free heap:%d, content len.:%d\n", ESP.getFreeHeap(), contLen);
+        // Start content transfer, switch the transfer method depending
+        // on whether it is chunked transfer or byte stream.
         if (_chunked) {
             PB_DBG("Transfer-Encoding:chunked\n");
             server.setContentLength(CONTENT_LENGTH_UNKNOWN);
             server.send(code, F("text/html"), _emptyString);
-            size_t  pos = 0;
-            while (pos < contLen) {
-                String contBuffer = content.substring(pos, pos + MAX_CONTENTBLOCK_SIZE); 
-                server.sendContent(contBuffer);
-                pos += MAX_CONTENTBLOCK_SIZE;
+            if (PB_Chunk) {
+                // Chunk block is a PageElement unit.
+                for (uint8_t i = 0; i < _element.size(); i++) {
+                    PageElement& element = _element[i].get();
+                    content = PageElement::build(element.mold(), element.source(), args);
+                    if (content.length())
+                        server.sendContent(content);
+                }
+            }
+            else {
+                // Here, PB_Auto turned to chunk mode.
+                size_t  pos = 0;
+                while (pos < contLen) {
+                    String contBuffer = content.substring(pos, pos + MAX_CONTENTBLOCK_SIZE); 
+                    server.sendContent(contBuffer);
+                    pos += MAX_CONTENTBLOCK_SIZE;
+                }
             }
             server.sendContent(_emptyString);
         }
@@ -135,6 +172,15 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
     return true;
 }
 
+/**
+ *  The page builder handler generates HTML based on PageElement and sends
+ *  it to the client.
+ *  @param  server          A reference of ESP8266WebServer.
+ *  @param  requestMethod   Method of http request that originated this response.
+ *  @param  requestUri      Request uri of this time.
+ *  @retval true    A response send.
+ *  @retval false   This request could not handled.
+ */
 bool PageBuilder::handle(WebServerClass& server, HTTPMethod requestMethod, String requestUri) {
     // Screening the available request
     if (!canHandle(requestMethod, requestUri))
@@ -218,8 +264,7 @@ String PageBuilder::build(PageArgument& args) {
         String segment = PageElement::build(element.mold(), element.source(), args);
         if (segment.length()) {
             if (!content.concat(segment)) {
-                PB_DBG("Content lost, length:%d\n", segment.length());
-                PB_DBG("Free heap:%ld\n", (long)ESP.getFreeHeap());
+                PB_DBG("Content lost, length:%d, free heap:%ld\n", segment.length(), (long)ESP.getFreeHeap());
             }
         }
     }
