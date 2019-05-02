@@ -115,7 +115,7 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
     // send http content to client
     if (!_cancel) {
         String  content;                // Content is available only in a NOT _cancel block
-        size_t  contLen;
+        size_t  contLen = 0;
         bool    _chunked = (_sendEnc == PB_Chunk);
 
         if (_sendEnc == PB_ByteStream || _sendEnc == PB_Auto) {

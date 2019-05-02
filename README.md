@@ -351,6 +351,7 @@ The function would be called twice at one http request. The cause is the interna
 
 #### [1.3.3] 2019-04-13
 - Fixed loss of built content when HTML is large.
+- Fixed a warning for uninitialized used.
 
 #### [1.3.2] 2019-02-07
 - Supports AutoConnect v0.9.7.
