@@ -2,8 +2,8 @@
  *  Declaration of PaguBuilder class and accompanying PageElement, PageArgument class.
  *  @file PageBuilder.h
  *  @author hieromon@gmail.com
- *  @version  1.3.3
- *  @date 2019-03-11
+ *  @version  1.3.4
+ *  @date 2019-06-27
  *  @copyright  MIT license.
  */
 

@@ -349,6 +349,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
+#### [1.3.4] 2019-06-27
+- Fixed PB_DBG_DUMB missing. PR #10
+
 #### [1.3.3] 2019-04-13
 - Fixed loss of built content when HTML is large.
 - Fixed a warning for uninitialized used.
