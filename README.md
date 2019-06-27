@@ -1,6 +1,6 @@
 # PageBuilder - HTML assembly aid for ESP8266/ESP32 WebServer
 [![Build Status](https://travis-ci.org/Hieromon/PageBuilder.svg?branch=master)](https://travis-ci.org/Hieromon/PageBuilder)
-[![arduino-library-badge](https://www.ardu-badge.com/badge/PageBuilder.svg)](https://www.ardu-badge.com/PageBuilder)
+[![arduino-library-badge](https://www.ardu-badge.com/badge/PageBuilder.svg?)](https://www.ardu-badge.com/PageBuilder)
 
 *An arduino library to create html string in the sketch for ESP8266/ESP32 WebServer.* 
 
