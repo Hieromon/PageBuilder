@@ -349,6 +349,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
+#### [1.3.5] 2019-12-04
+- Fixed losing uri set with setUri. (issue #13)
+
 #### [1.3.4] 2019-06-27
 - Fixed PB_DBG_DUMB missing. PR #10
 
