@@ -2,8 +2,8 @@
  *  Declaration of PaguBuilder class and accompanying PageElement, PageArgument class.
  *  @file PageBuilder.h
  *  @author hieromon@gmail.com
- *  @version  1.3.4
- *  @date 2019-06-27
+ *  @version  1.3.5
+ *  @date 2019-12-04
  *  @copyright  MIT license.
  */
 
@@ -146,9 +146,8 @@ typedef std::function<bool(HTTPMethod, String)> PrepareFuncT;
  */
 class PageBuilder : public RequestHandler {
  public:
-  PageBuilder() : _uri(nullptr), _method(HTTP_ANY), _upload(nullptr), _noCache(true), _cancel(false), _sendEnc(PB_Auto), _rSize(0), _server(nullptr), _canHandle(nullptr) {}
+  PageBuilder() : _method(HTTP_ANY), _upload(nullptr), _noCache(true), _cancel(false), _sendEnc(PB_Auto), _rSize(0), _server(nullptr), _canHandle(nullptr) {}
   explicit PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = PB_Auto) :
-    _uri(nullptr),
     _element(element),
     _method(method),
     _upload(nullptr),
@@ -159,7 +158,7 @@ class PageBuilder : public RequestHandler {
     _server(nullptr),
     _canHandle(nullptr) {}
   PageBuilder(const char* uri, PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = PB_Auto) :
-    _uri(uri),
+    _uri(String(uri)),
     _element(element),
     _method(method),
     _upload(nullptr),
@@ -170,7 +169,7 @@ class PageBuilder : public RequestHandler {
     _server(nullptr),
     _canHandle(nullptr) {}
 
-  virtual ~PageBuilder() { _uri = nullptr; _server = nullptr; clearElement(); }
+  virtual ~PageBuilder() { _server = nullptr; clearElement(); }
 
   /** The type of user-owned function for uploading. */
   typedef std::function<void(const String&, const HTTPUpload&)> UploadFuncT;
@@ -180,8 +179,8 @@ class PageBuilder : public RequestHandler {
   bool handle(WebServerClass& server, HTTPMethod requestMethod, String requestUri) override;
   virtual void upload(WebServerClass& server, String requestUri, HTTPUpload& upload) override;
 
-  void setUri(const char* uri) { _uri = uri; }
-  const char* uri() { return _uri; }
+  void setUri(const char* uri) { _uri = String(uri); }
+  const char* uri() { return _uri.c_str(); }
   void insert(WebServerClass& server) { server.addHandler(this); }
   void addElement(PageElement& element) { _element.push_back(element); }
   void clearElement();
@@ -197,7 +196,7 @@ class PageBuilder : public RequestHandler {
   void reserve(size_t size) { _rSize = size; }
 
  protected:
-  const char*   _uri;       /**< uri of this page */
+  String        _uri;       /**< uri of this page */
   PageElementVT _element;   /**< PageElement container */
   HTTPMethod    _method;    /**< Method of http request to which this page applies. */
   UploadFuncT   _upload;    /**< 'upload' user owned function */
