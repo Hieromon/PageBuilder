@@ -138,7 +138,7 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
             PB_DBG("Transfer-Encoding:chunked\n");
             server.setContentLength(CONTENT_LENGTH_UNKNOWN);
             server.send(code, F("text/html"), _emptyString);
-            if (PB_Chunk) {
+            if (_sendEnc == PB_Chunk) {
                 // Chunk block is a PageElement unit.
                 for (uint8_t i = 0; i < _element.size(); i++) {
                     PageElement& element = _element[i].get();

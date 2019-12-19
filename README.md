@@ -349,6 +349,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
+#### [1.3.6] 2019-12-19
+- Fixed a token handler being called twice when building content with more than 1270 bytes. (issue #14)
+
 #### [1.3.5] 2019-12-04
 - Fixed losing uri set with setUri. (issue #13)
 
