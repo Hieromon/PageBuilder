@@ -106,7 +106,7 @@ String ledIO(PageArgument& args) {
 
 // Page construction
 PageElement Button(_PAGE_LED, {
-  {"STYLE", [](PageArgument& arg) { return String(_STYLE_BUTTON); }},
+  {"STYLE", [](PageArgument& arg) { return String(FPSTR(_STYLE_BUTTON)); }},
   {"ARCH", getArch },
   {"LEDIO", ledIO }
 });
