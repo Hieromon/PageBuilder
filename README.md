@@ -302,9 +302,9 @@ Set buffer size for reserved content building buffer.
 Enable authentication when the page is accessed. It can take either DIGEST or BASIC as the authentication method, and HTTP authentication will work with the `username` and `password` specified along with the URL access.
 - `username` : Specify the user name to embed in the sketch for authentication. Specifying a **NULL** value for the `username` can de-authorize the page in dynamically.
 - `password` : Specify the password to embed in the sketch for authentication.
-- `mode` : Specify the authentication method as either **BASIC** or **DIGEST**. An enumeration value is `AUTH_BASIC` for **BASIC**, `AUTH_DIGEST` for **DIGEST**. This parameter can be omitted, and the default value is `AUTH_BASIC`.
-- `realm` : Specify an authentication realm. This parameter can be omitted, and the default value is `"Login Required"`, which depends on the `ESP8266WebServer::requestAuthentication` API default value.
-- `authFail` : The Content of the HTML response in case of Unautherized Access.
+- `mode` : Specify the authentication method as either **BASIC** or **DIGEST**. An enumeration value is `BASIC_AUTH` for **BASIC**, `DIGEST_AUTH` for **DIGEST**. This parameter can be omitted, and the default value is `BASIC_AUTH`. It depends on **HTTPAuthMethod** enumeration.
+- `realm` : Specify an authentication [realm](https://tools.ietf.org/html/rfc2617#section-1.2). This parameter can be omitted, and the default value is `"Login Required"`, which depends on the `ESP8266WebServer::requestAuthentication` API default value.
+- `authFail` : The Content of the HTML response in case of Unauthorized Access.
 
 ### PageElement methods
 

@@ -143,7 +143,7 @@ void setup() {
   } while (WiFi.waitForConnectResult() != WL_CONNECTED);
   Serial.println("Connected to " + String(SSID));
 
-  LEDPage.authentication(username, password, AUTH_DIGEST, "WebLED");
+  LEDPage.authentication(username, password, DIGEST_AUTH, "WebLED");
   LEDPage.insert(Server);
   Server.begin();
 
