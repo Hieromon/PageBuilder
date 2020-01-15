@@ -14,6 +14,7 @@ arg	KEYWORD2
 argName	KEYWORD2
 args	KEYWORD2
 atNotFound	KEYWORD2
+authentication	KEYWORD2
 build	KEYWORD2
 cancel	KEYWORD2
 clearElement	KEYWORD2
