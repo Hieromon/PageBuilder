@@ -298,6 +298,14 @@ Set Transfer-Encoding with chunked, or not.
 Set buffer size for reserved content building buffer.
 - `size` : Reservation size. If you do not specify a reserved buffer size by this function, the buffer for the build function will not be reserved. As a result, memory insufficient is likely to occur due to fragmentation.
 
+#### `void PageBuilder::authentication(const char* username, const char* password, HTTPAuthMethod mode, const char* realm, const String& authFail)`
+Enable authentication when the page is accessed. It can take either DIGEST or BASIC as the authentication method, and HTTP authentication will work with the `username` and `password` specified along with the URL access.
+- `username` : Specify the user name to embed in the sketch for authentication. Specifying a **NULL** value for the `username` can de-authorize the page in dynamically.
+- `password` : Specify the password to embed in the sketch for authentication.
+- `mode` : Specify the authentication method as either **BASIC** or **DIGEST**. An enumeration value is `AUTH_BASIC` for **BASIC**, `AUTH_DIGEST` for **DIGEST**. This parameter can be omitted, and the default value is `AUTH_BASIC`.
+- `realm` : Specify an authentication realm. This parameter can be omitted, and the default value is `"Login Required"`, which depends on the `ESP8266WebServer::requestAuthentication` API default value.
+- `authFail` : The Content of the HTML response in case of Unautherized Access.
+
 ### PageElement methods
 
 #### `const char* PageElement::mold()`  
@@ -348,6 +356,9 @@ The function would be called twice at one http request. The cause is the interna
 
 
 ## Change log
+
+#### [1.4.0] 2020-01-17
+- Adds BASIC / DIGEST authentication.
 
 #### [1.3.7] 2020-01-14
 - Fixed WebLED example sketch crashes.
