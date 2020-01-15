@@ -121,6 +121,9 @@ WebServer  Server;
 const char* SSID = "********";  // Modify for your available WiFi AP
 const char* PSK  = "********";  // Modify for your available WiFi AP
 
+const char* username = "admin";
+const char* password = "espadmin";
+
 #define BAUDRATE 115200
 
 void setup() {
@@ -140,6 +143,7 @@ void setup() {
   } while (WiFi.waitForConnectResult() != WL_CONNECTED);
   Serial.println("Connected to " + String(SSID));
 
+  LEDPage.authentication(username, password, AUTH_DIGEST, "WebLED");
   LEDPage.insert(Server);
   Server.begin();
 
