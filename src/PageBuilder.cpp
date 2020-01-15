@@ -112,7 +112,7 @@ void PageBuilder::authentication(const char* username, const char* password, HTT
  *  @return A pointer of a held string
  */
 char* PageBuilder::_digestKey(const char* key) {
-    if (key) {
+    if (key && strlen(key)) {
         char* cb = (char*)malloc(strlen(key) + sizeof('\0'));
         if (cb)
             strcpy(cb, key);
