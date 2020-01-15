@@ -1,9 +1,9 @@
 /**
- *  Declaration of PaguBuilder class and accompanying PageElement, PageArgument class.
+ *  Declaration of PageBuilder class and accompanying PageElement, PageArgument class.
  *  @file PageBuilder.h
  *  @author hieromon@gmail.com
- *  @version  1.3.5
- *  @date 2019-12-04
+ *  @version  1.4.0
+ *  @date 2020-01-15
  *  @copyright  MIT license.
  */
 
@@ -169,7 +169,7 @@ class PageBuilder : public RequestHandler {
     _server(nullptr),
     _canHandle(nullptr) {}
 
-  virtual ~PageBuilder() { _server = nullptr; clearElement(); }
+  virtual ~PageBuilder() { _server = nullptr; clearElement(); _username.reset(); _password.reset(); _realm.reset(); }
 
   /** The type of user-owned function for uploading. */
   typedef std::function<void(const String&, const HTTPUpload&)> UploadFuncT;
@@ -192,8 +192,9 @@ class PageBuilder : public RequestHandler {
   void exitCanHandle(PrepareFuncT prepareFunc) { _canHandle = prepareFunc; }
   virtual void onUpload(UploadFuncT uploadFunc) { _upload = uploadFunc; }
   void cancel() { _cancel = true; }
-  void chunked(const TransferEncoding_t devide) { _sendEnc = devide; }
+  void chunked(const TransferEncoding_t devid) { _sendEnc = devid; }
   void reserve(size_t size) { _rSize = size; }
+  void authentication(const char* username, const char* password, HTTPAuthMethod mode = BASIC_AUTH, const char* realm = NULL, const String& authFail = String(""));
 
  protected:
   String        _uri;       /**< uri of this page */
@@ -203,12 +204,18 @@ class PageBuilder : public RequestHandler {
 
  private:
   bool    _sink(int code, WebServerClass& server);  /**< send Content */
+  char*   _digestKey(const char* key);  /**< save authentication parameter */
   bool    _noCache;               /**< A flag for must-revalidate cache control response */
   bool    _cancel;                /**< Automatic send cancellation */
   TransferEncoding_t  _sendEnc;   /**< Use chunked sending */
+  HTTPAuthMethod  _auth;          /**< Authentication method */
   size_t  _rSize;                 /**< Reserved buffer size for content building */
   WebServerClass* _server;
-  PrepareFuncT  _canHandle;       /**< 'canHanlde' user owned function */
+  PrepareFuncT  _canHandle;       /**< 'canHandle' user owned function */
+  std::unique_ptr<char> _username;  /**< A user name for authentication */
+  std::unique_ptr<char> _password;  /**< A password for authentication */
+  std::unique_ptr<char> _realm;     /**< realm for DIGEST */
+  String  _fails;                /**< A message for authentication failed */
 
   static const String _emptyString;
 };
