@@ -4,8 +4,8 @@
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
 #include <WebServer.h>
-#ifndef BUILTIN_LED
-#define BUILTIN_LED 2 // Adjust to the actual board
+#ifndef LED_BUILTIN
+#define LED_BUILTIN 2 // Adjust to the actual board
 #endif
 #endif
 #include "PageBuilder.h"
@@ -70,8 +70,8 @@ p {
 )rawliteral";
 
 // ONBOARD_LED is WiFi connection indicator.
-// BUILTIN_LED is controled by the web page.
-#define ONBOARD_LED 2     // Different pin assignment by each module
+// LED_BUILTIN is controled by the web page.
+#define ONBOARD_LED 16    // Different pin assignment by each module
 
 // Get an architecture of compiled
 String getArch(PageArgument& args) {
@@ -82,24 +82,24 @@ String getArch(PageArgument& args) {
 #endif
 }
 
-// This function is the logic for BUILTIN_LED on/off.
+// This function is the logic for LED_BUILTIN on/off.
 // It is called from the occurrence of the 'LEDIO' token by PageElement
 //  'Button' declaration as following code.
 String ledIO(PageArgument& args) {
   String ledImage = "";
 
-  // Blinks BUILTIN_LED according to value of the http request parameter 'led'.
+  // Blinks LED_BUILTIN according to value of the http request parameter 'led'.
   if (args.hasArg("led")) {
     if (args.arg("led") == "on")
-      digitalWrite(BUILTIN_LED, LOW);
+      digitalWrite(LED_BUILTIN, LOW);
     else if (args.arg("led") == "off")
-      digitalWrite(BUILTIN_LED, HIGH);
+      digitalWrite(LED_BUILTIN, HIGH);
   }
   delay(10);
 
   // Feedback the lighting icon depending on actual port value which
   //  indepent from the http request parameter.
-  if (digitalRead(BUILTIN_LED) == LOW)
+  if (digitalRead(LED_BUILTIN) == LOW)
     ledImage = FPSTR(_PNG_LED);
   return ledImage;
 }
@@ -132,8 +132,8 @@ void setup() {
 
   pinMode(ONBOARD_LED, OUTPUT);
   digitalWrite(ONBOARD_LED, HIGH);
-  pinMode(BUILTIN_LED, OUTPUT);
-  digitalWrite(BUILTIN_LED, HIGH);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
 
   WiFi.disconnect();
   WiFi.mode(WIFI_STA);
