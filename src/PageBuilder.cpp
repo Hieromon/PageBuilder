@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.3.3
- *  @date   2019-03-11
+ *  @version    1.4.0
+ *  @date   2020-04-10
  *  @copyright  MIT license.
  */
 
@@ -88,6 +88,36 @@ void PageBuilder::upload(WebServerClass& server, String requestUri, HTTPUpload& 
     (void)server;
     if (canUpload(requestUri))
         _upload(requestUri, upload);
+}
+
+/**
+ *  Save the parameters for authentication.
+ *  @param  username  A user name for authentication.
+ *  @param  password  A password
+ *  @param  mode      Authentication method
+ *  @param  realm     A realm
+ *  @param  authFail  Message string for authentication failed
+ */
+void PageBuilder::authentication(const char* username, const char* password, HTTPAuthMethod mode, const char* realm, const String& authFail) {
+    _auth = mode;
+    _username.reset(_digestKey(username));
+    _password.reset(_digestKey(password));
+    _realm.reset(_digestKey(realm));
+    _fails = String(authFail.c_str());
+}
+
+/**
+ *  Hold an authentication parameter
+ *  @param  key  Authentication parameter string
+ *  @return A pointer of a held string
+ */
+char* PageBuilder::_digestKey(const char* key) {
+    if (key && strlen(key)) {
+        char* cb = new char[strlen(key) + sizeof('\0')];
+        strcpy(cb, key);
+        return cb;
+    }
+    return nullptr;
 }
 
 /**
@@ -185,6 +215,15 @@ bool PageBuilder::handle(WebServerClass& server, HTTPMethod requestMethod, Strin
     // Screening the available request
     if (!canHandle(requestMethod, requestUri))
         return false;
+
+    if (_username) {
+        // Should be able to authenticate with the specified username.
+        if (!server.authenticate(_username.get(), _password.get())) {
+            PB_DBG("failed to authenticate\n");
+            server.requestAuthentication(_auth, _realm.get(), _fails);
+            return true;
+        }
+    }
 
     // Throw with 200 response
     return _sink(200, server);
@@ -436,7 +475,7 @@ int PageArgument::args() {
 }
 
 /**
- *  Returns whether the http request to PageBuiler that invoked this PageElement
+ *  Returns whether the http request to PageBuilder that invoked this PageElement
  *  contained parameters.
  *  @retval true    This http request contains parameter(s).
  *  @retval false   This http request has no parameter.
