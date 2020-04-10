@@ -4,7 +4,7 @@
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
  *  @version    1.4.0
- *  @date   2020-01-15
+ *  @date   2020-04-10
  *  @copyright  MIT license.
  */
 
@@ -113,12 +113,8 @@ void PageBuilder::authentication(const char* username, const char* password, HTT
  */
 char* PageBuilder::_digestKey(const char* key) {
     if (key && strlen(key)) {
-        char* cb = (char*)malloc(strlen(key) + sizeof('\0'));
-        if (cb)
-            strcpy(cb, key);
-        else {
-            PB_DBG("Failed to allocate authentication buffer\n");
-        }
+        char* cb = new char[strlen(key) + sizeof('\0')];
+        strcpy(cb, key);
         return cb;
     }
     return nullptr;

@@ -3,7 +3,7 @@
  *  @file PageBuilder.h
  *  @author hieromon@gmail.com
  *  @version  1.4.0
- *  @date 2020-01-15
+ *  @date 2020-04-10
  *  @copyright  MIT license.
  */
 
@@ -212,9 +212,9 @@ class PageBuilder : public RequestHandler {
   size_t  _rSize;                 /**< Reserved buffer size for content building */
   WebServerClass* _server;
   PrepareFuncT  _canHandle;       /**< 'canHandle' user owned function */
-  std::unique_ptr<char> _username;  /**< A user name for authentication */
-  std::unique_ptr<char> _password;  /**< A password for authentication */
-  std::unique_ptr<char> _realm;     /**< realm for DIGEST */
+  std::unique_ptr<char[]> _username;  /**< A user name for authentication */
+  std::unique_ptr<char[]> _password;  /**< A password for authentication */
+  std::unique_ptr<char[]> _realm;     /**< realm for DIGEST */
   String  _fails;                /**< A message for authentication failed */
 
   static const String _emptyString;
