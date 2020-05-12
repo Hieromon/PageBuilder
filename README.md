@@ -358,6 +358,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
+#### [1.4.1] 2020-05-13
+- Avoid empty-body warning with PB_DEBUG not specified.
+
 #### [1.4.0] 2020-04-10
 - Adds BASIC / DIGEST authentication.
 
