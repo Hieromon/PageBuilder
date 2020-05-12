@@ -1,7 +1,7 @@
 language: generic
 env:
   global:
-    - IDE_VERSION=1.8.5
+    - IDE_VERSION=1.8.12
   matrix:
     - BOARD="esp8266:esp8266:generic:xtal=80,eesz=4M3M,ip=lm2f,exception=disabled,FlashMode=qio,FlashFreq=80"
     - BOARD="esp32:esp32:esp32:FlashFreq=80,FlashSize=4M"
