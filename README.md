@@ -358,6 +358,9 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Change log
 
+#### [1.4.2] 2020-05-25
+- Supports LittleFS on ESP8266.
+
 #### [1.4.1] 2020-05-13
 - Avoid empty-body warning with PB_DEBUG not specified.
 
