@@ -3,16 +3,25 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.4.0
- *  @date   2020-04-10
+ *  @version    1.4.2
+ *  @date   2020-05-25
  *  @copyright  MIT license.
  */
 
 #include "PageBuilder.h"
 #include "PageStream.h"
+#if defined(ARDUINO_ARCH_ESP8266)
+#ifdef PB_USE_SPIFFS
 #include <FS.h>
-#ifdef ARDUINO_ARCH_ESP32
+namespace PageBuilderFS { FS& flash = SPIFFS; };
+#else
+#include <LittleFS.h>
+namespace PageBuilderFS { FS& flash = LittleFS; };
+#endif
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <FS.h>
 #include <SPIFFS.h>
+namespace PageBuilderFS { FS& flash = SPIFFS; };
 #endif
 
 // A maximum length of the content block to switch to chunked transfer.
@@ -370,7 +379,7 @@ String PageElement::build(const char* mold, TokenVT tokenSource, PageArgument& a
     // When the mold parameter has the prefix "file:", read the mold source
     // from the file.
     if (templ.startsWith(PAGEELEMENT_FILE)) {
-        File mf = SPIFFS.open(templ.substring(strlen(PAGEELEMENT_FILE)), "r");
+        File mf = PageBuilderFS::flash.open(templ.substring(strlen(PAGEELEMENT_FILE)), "r");
         if (mf) {
             templ = mf.readString();
             mf.close();

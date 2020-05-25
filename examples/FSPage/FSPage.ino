@@ -10,16 +10,15 @@
   your smartphone and it will be listed the WiFi AP that you can connect.
   You can select and connect the listed SSID.
   It is using Web page transition in the dialogue procedure for connecting
-  to SSID, and its HTML source is stored in SPIFFS file.
+  to SSID, and its HTML source is stored in SPIFFS or LittleFS file.
 
   Before executing this sketch, you need to upload the data folder to SPIFFS
-  of ESP8266 by the tool as "ESP8266 Sketch Data Upload" in Tools menu in
-  Arduino IDE.
+  or LittleFS of ESP8266 by the tool as "ESP8266 Sketch Data Upload" in Tools
+  menu in Arduino IDE.
 */
 #if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <FS.h>
 #define WIFI_EVENT_STA_CONNECTED      WIFI_EVENT_STAMODE_CONNECTED
 #define WIFI_EVENT_STA_DISCONNECTED   WIFI_EVENT_STAMODE_DISCONNECTED
 #define WIFI_EVENT_AP_STACONNECTED    WIFI_EVENT_SOFTAPMODE_STACONNECTED
@@ -29,7 +28,6 @@
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
 #include <WebServer.h>
-#include <SPIFFS.h>
 #define WIFI_EVENT_STA_CONNECTED      SYSTEM_EVENT_STA_CONNECTED
 #define WIFI_EVENT_STA_DISCONNECTED   SYSTEM_EVENT_STA_DISCONNECTED
 #define WIFI_EVENT_AP_STACONNECTED    SYSTEM_EVENT_AP_STACONNECTED
@@ -42,8 +40,18 @@
 #define AP_PASS "12345678"
 
 #if defined(ARDUINO_ARCH_ESP8266)
+#ifdef PB_USE_SPIFFS
+#include <FS.h>
+FS& FlashFile = SPIFFS;
+#else
+#include <LittleFS.h>
+FS& FlashFile = LittleFS;
+#endif
 ESP8266WebServer server;
 #elif defined(ARDUINO_ARCH_ESP32)
+#include <FS.h>
+#include <SPIFFS.h>
+FS& FlashFile = SPIFFS;
 WebServer server;
 #endif
 
@@ -276,7 +284,7 @@ void setup() {
   Serial.println(WiFi.softAPIP());
 
   // Start http server.
-  SPIFFS.begin();
+  FlashFile.begin();
   server.begin();
 
   // Turn on WiFi event handling.

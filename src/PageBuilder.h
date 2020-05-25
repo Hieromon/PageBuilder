@@ -2,8 +2,8 @@
  *  Declaration of PageBuilder class and accompanying PageElement, PageArgument class.
  *  @file PageBuilder.h
  *  @author hieromon@gmail.com
- *  @version  1.4.0
- *  @date 2020-04-10
+ *  @version  1.4.2
+ *  @date 2020-05-25
  *  @copyright  MIT license.
  */
 
@@ -32,6 +32,11 @@ using WebServerClass = WebServer;
 
 // Uncomment the following PB_DEBUG to enable debug output.
 // #define PB_DEBUG
+
+// SPIFFS has deprecated on EP8266 core. This flag indicates that
+// the migration to LittleFS has not completed.
+// Uncomment the following PB_USE_SPIFFS to enable SPIFFS.
+// #define PB_USE_SPIFFS
 
 // Debug output destination can be defined externally with PB_DEBUG_PORT
 #ifndef PB_DEBUG_PORT
