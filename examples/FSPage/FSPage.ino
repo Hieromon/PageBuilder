@@ -51,7 +51,7 @@ ESP8266WebServer server;
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <FS.h>
 #include <SPIFFS.h>
-FS& FlashFile = SPIFFS;
+fs::SPIFFSFS& FlashFile = SPIFFS;
 WebServer server;
 #endif
 
