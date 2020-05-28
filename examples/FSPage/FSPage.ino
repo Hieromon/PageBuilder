@@ -288,6 +288,9 @@ void setup() {
   server.begin();
 
   // Turn on WiFi event handling.
+  // It is deprecated in ESP8266, but it remains because the alternative
+  // API's onSoftAPModeStationConnected event does not fire properly in
+  // SoftAP + STA mode.
   WiFi.onEvent(broadcastEvent, WIFI_EVENT_ALL);
 }
 
