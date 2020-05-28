@@ -216,14 +216,18 @@ PageElement::PageElement(const char* mold, TokenVT source);
   String func2(PageArgument& args);
   PageElement elem(html, {{"TOKEN1", func1}, {"TOKEN2", func2}});
   ```
-  `mold` can also use external files placed on SPIFFS. Since HTML consists of more strings, the program area may be smaller in sketches using many pages.  
-  External files can have HTML source specified by `mold`. That file would be allocated on the SPIFFS file system. This allows you to reduce the sketch size and assign more capacity to the program.  
+  `mold` can also use external files placed on [LittleFS](https://arduino-esp8266.readthedocs.io/en/latest/filesystem.html#spiffs-and-littlefs) or [SPIFFS](https://arduino-esp8266.readthedocs.io/en/latest/filesystem.html#spiffs-and-littlefs). Since HTML consists of more strings, the program area may be smaller in sketches using many pages.  
+  External files can have HTML source specified by `mold`. That file would be allocated on the LittleFS or SPIFFS file system. This allows you to reduce the sketch size and assign more capacity to the program.  
   You can specify the HTML source file name by `mold` parameter in the following format.  
   ```
   file:FILE_NAME
   ```
-  `FILE_NAME` is the name of the HTML source file containing `/`. If prefix **file:** is specified in `mold` parameter, the PageElement class reads its file from SPIFFS as HTML source. A sample sketch using this way is an example as [FSPage.ino](examples/FSPage/README.md).  
+  `FILE_NAME` is the name of the HTML source file containing `/`. If prefix **file:** is specified in `mold` parameter, the PageElement class reads its file from LittleFS or SPIFFS as HTML source. A sample sketch using this way is an example as [FSPage.ino](examples/FSPage/README.md).  
   For details for how to write HTML source file to SPIFFS of ESP8266, please refer to [Uploading files to file system](https://arduino-esp8266.readthedocs.io/en/latest/filesystem.html#uploading-files-to-file-system).
+
+
+  **Note:**
+  For ESP8266, the default file system has been changed to LittleFS since PageBuilder v1.4.2. It is a measure in compliance with the ESP8266 core 2.7.0 or later treating SPIFFS as deprecated. 
 
 ## Methods
 
@@ -355,10 +359,19 @@ The function would be called twice at one http request. The cause is the interna
 ### An example using this way.  
 [DynamicPage.ino](examples/DynamicPage/DynamicPage.ino)
 
+## Significant changes
+
+Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS. It is a measure to comply with the deprecation of SPIFFS by the core. However, SPIFFS is still available and defines the [**PB_USE_SPIFFS**](https://github.com/Hieromon/PageBuilder/blob/master/src/PageBuilder.h#L39) macro in [PageBuilder.h](https://github.com/Hieromon/PageBuilder/blob/master/src/PageBuilder.h) file to enable it as follows:
+
+```cpp
+#define PB_USE_SPIFFS
+```
+
+**PB_USE_SPIFFS** macro is valid only when the platform is ESP8266 and will be ignored with ESP32 arduino core. (at least until LittleFS is supported by the ESP32 arduino core)
 
 ## Change log
 
-#### [1.4.2] 2020-05-25
+#### [1.4.2] 2020-05-28
 - Supports LittleFS on ESP8266.
 
 #### [1.4.1] 2020-05-13
