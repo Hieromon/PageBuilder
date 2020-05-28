@@ -79,6 +79,18 @@ String resConnect(PageArgument&);
 PageElement CONNRES_ELM("{{CONN}}", { {"CONN", resConnect} });
 PageBuilder CONNRES_PAGE(URI_RESULT, {CONNRES_ELM});
 
+// Convert RSSI dBm to signal strength
+unsigned int toWiFiQuality(int32_t rssi) {
+  unsigned int  qu;
+  if (rssi <= -100)
+    qu = 0;
+  else if (rssi >= -50)
+    qu = 100;
+  else
+    qu = 2 * (rssi + 100);
+  return qu;
+}
+
 // This callback function would be invoked from the root page and scans nearby
 // WiFi-AP to make a connectable list.
 String listSSID(PageArgument& args) {
@@ -98,18 +110,6 @@ String listSSID(PageArgument& args) {
   }
   CONNECT_REQ = false;
   return s_ssid_list;
-}
-
-// Convert RSSI dBm to signal strength
-unsigned int toWiFiQuality(int32_t rssi) {
-  unsigned int  qu;
-  if (rssi <= -100)
-    qu = 0;
-  else if (rssi >= -50)
-    qu = 100;
-  else
-    qu = 2 * (rssi + 100);
-  return qu;
 }
 
 // Accepting connection request.
