@@ -1,7 +1,15 @@
-# An example PageBuilder with HTML page stored SPIFFS.
+# An example PageBuilder with HTML page stored in the flash filesystem.
 
 This example shows how to reduce the size of program memory by storing the HTML source in ESP8266's flash file system and separating it from the sketch source code.  
-Before executing this sketch, you need to upload the data folder of **libraries/PageBuilder/examples/FSPage** to SPIFFS of ESP8266 by the tool as "ESP8266 Sketch Data Upload" in Tools menu in Arduino IDE. Refer to [**Uploading file to file system**](https://arduino-esp8266.readthedocs.io/en/latest/filesystem.html#uploading-files-to-file-system) of [ESP8266 Arduino Core's documentation](https://arduino-esp8266.readthedocs.io/en/latest/index.html).
+Before executing this sketch, you need to upload the data folder of **libraries/PageBuilder/examples/FSPage** to SPIFFS or LittleFS of ESP8266 by the tool as "ESP8266 Sketch Data Upload" in Tools menu in Arduino IDE. Refer to [**Uploading file to file system**](https://arduino-esp8266.readthedocs.io/en/latest/filesystem.html#uploading-files-to-file-system) of [ESP8266 Arduino Core's documentation](https://arduino-esp8266.readthedocs.io/en/latest/index.html).
+
+**Note:** Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS. It is a measure to comply with the deprecation of SPIFFS by the core. However, SPIFFS is still available and defines the **PB_USE_SPIFFS** macro in [PageBuilder.h](https://github.com/Hieromon/PageBuilder/blob/master/src/PageBuilder.h) file to enable it as follows:
+
+```cpp
+#define PB_USE_SPIFFS
+```
+
+**PB_USE_SPIFFS** macro is valid only when the platform is ESP8266 and will be ignored with ESP32 arduino core. (at least until LittleFS is supported by the ESP32 arduino core)
 
 ## What does this example do?
 
@@ -17,7 +25,7 @@ Taps the SSID or "?" in the list you want to connect. Enter the passphrase for t
 
 ![welcome](https://user-images.githubusercontent.com/12591771/34146247-93afdc26-e4dc-11e7-9023-4bdf461d490a.png) &nbsp;&nbsp;&nbsp; ![failed](https://user-images.githubusercontent.com/12591771/34146368-0d9ed10e-e4dd-11e7-9901-2cb5263a09a4.png)
 
-## What is the effect of the PageBuilder brought with SPIFFS?
+## What is the effect of the PageBuilder brought with the flash filesystem?
 
 The size of the HTML of this example is about 6,500 bytes. On the other hand, the sketch size is 276,005 bytes. The sketch using the **ESP8266WebServer** class with empty setup() and loop() is even consumed 227,445 bytes. And more CSS codes are required to improve operability on smartphones. If you want to do more complicated Web page, you probably need to include JavaScript too. It is not preferable to incorporate that code into the sketch. The test takes too much work and the sketch size becomes bigger.  
 With PageBuilder you can relatively easily place the HTML source in external files.  
