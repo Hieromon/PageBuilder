@@ -21,7 +21,7 @@ namespace PageBuilderFS { FS& flash = LittleFS; };
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <FS.h>
 #include <SPIFFS.h>
-namespace PageBuilderFS { FS& flash = SPIFFS; };
+namespace PageBuilderFS { fs::SPIFFSFS& flash = SPIFFS; };
 #endif
 
 // A maximum length of the content block to switch to chunked transfer.
