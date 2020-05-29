@@ -43,11 +43,11 @@ using WebServerClass = WebServer;
 #define PB_DEBUG_PORT Serial
 #endif // !PB_DEBUG_PORT
 #ifdef PB_DEBUG
-#define PB_DBG_DUMB(fmt, ...) do {PB_DEBUG_PORT.printf(PSTR(fmt), ## __VA_ARGS__ );} while (0)
-#define PB_DBG(fmt, ...) do {PB_DEBUG_PORT.printf(PSTR("[PB] " fmt), ## __VA_ARGS__ );} while (0)
+#define PB_DBG_DUMB(fmt, ...) do {PB_DEBUG_PORT.printf_P((PGM_P)PSTR(fmt), ## __VA_ARGS__ );} while (0)
+#define PB_DBG(fmt, ...) do {PB_DEBUG_PORT.printf_P((PGM_P)PSTR("[PB] " fmt), ## __VA_ARGS__ );} while (0)
 #else
-#define PB_DBG_DUMB(...) do {} while (0)
-#define PB_DBG(...) do {} while (0)
+#define PB_DBG_DUMB(...) do {(void)0;} while (0)
+#define PB_DBG(...) do {(void)0;} while (0)
 #endif // !PB_DEBUG
 
 #define PAGEELEMENT_FILE  "file:"
