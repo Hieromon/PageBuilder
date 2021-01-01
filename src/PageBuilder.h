@@ -1,42 +1,32 @@
 /**
- *  Declaration of PageBuilder class and accompanying PageElement, PageArgument class.
- *  @file PageBuilder.h
- *  @author hieromon@gmail.com
- *  @version  1.4.2
- *  @date 2020-05-25
- *  @copyright  MIT license.
+ * Declaration of PageBuilder class and accompanying PageElement, PageArgument class.
+ * @file PageBuilder.h
+ * @author hieromon@gmail.com
+ * @version  1.5.0
+ * @date 2020-12-31
+ * @copyright  MIT license.
  */
 
-#ifndef _PAGEBUILDER_H
-#define _PAGEBUILDER_H
+#ifndef _PAGEBUILDER_H_
+#define _PAGEBUILDER_H_
 
-#if defined(ARDUINO) && ARDUINO >= 100
-#include "Arduino.h"
-#else
-#include "WProgram.h"
-#endif
-
+#include <Arduino.h>
 #include <functional>
+#include <forward_list>
+#include <stack>
 #include <vector>
-#include <memory>
-#include <Stream.h>
+#include <iterator>
 #if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-using WebServerClass = ESP8266WebServer;
+using WebServer = ESP8266WebServer;
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
 #include <WebServer.h>
-using WebServerClass = WebServer;
 #endif
 
 // Uncomment the following PB_DEBUG to enable debug output.
 // #define PB_DEBUG
-
-// SPIFFS has deprecated on EP8266 core. This flag indicates that
-// the migration to LittleFS has not completed.
-// Uncomment the following PB_USE_SPIFFS to enable SPIFFS.
-// #define PB_USE_SPIFFS
 
 // Debug output destination can be defined externally with PB_DEBUG_PORT
 #ifndef PB_DEBUG_PORT
@@ -50,179 +40,273 @@ using WebServerClass = WebServer;
 #define PB_DBG(...) do {(void)0;} while (0)
 #endif // !PB_DEBUG
 
-#define PAGEELEMENT_FILE  "file:"
+// SPIFFS has deprecated on EP8266 core. This flag indicates that
+// the migration to LittleFS has not completed.
+// Uncomment the following PB_USE_SPIFFS to enable SPIFFS.
+// #define PB_USE_SPIFFS
 
-/** HTTP get or post method argument pair structure. */
-typedef struct _RequestArgumentS {
-  String  _key;     /**< Parameter name */
-  String  _value;   /**< Parameter value */
-} RequestArgument;
+// Determining the valid file system currently configured
+#if defined(ARDUINO_ARCH_ESP8266)
+#ifdef PB_USE_SPIFFS
+#include <FS.h>
+#define PB_APPLIED_FILESYSTEM   SPIFFS
+#else
+#include <LittleFS.h>
+#define PB_APPLIED_FILESYSTEM   LittleFS
+#endif
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <FS.h>
+#include <SPIFFS.h>
+#define PB_APPLIED_FILESYSTEM   SPIFFS
+#endif
 
-/** Transfer encoding type with ESP8266WebSever::sendcontent */
-typedef enum {
-  PB_Auto,             /**< Use chunked transfer */
-  PB_ByteStream,       /**< Specify content length */
-  PB_Chunk             /**< Dynamically change the transfer encoding according to the content length. */
-} TransferEncoding_t;
+// The length of one content block is predefined and determined at compilation.
+// The block length affects how the content is sent. If the HTML content
+// of the generated page exceeds this size, PageBuilder will send it
+// with chunks.
+#ifndef PAGEBUILDER_CONTENTBLOCK_SIZE
+#define PAGEBUILDER_CONTENTBLOCK_SIZE     1270
+#endif
+
+// Delimiter character to appear the token in the page element
+// It must be given as a pair of OPEN and CLOSE.
+#ifndef PAGEBUILDER_TOKENDELIMITER_OPEN
+#define PAGEBUILDER_TOKENDELIMITER_OPEN   '{'
+#endif
+#ifndef PAGEBUILDER_TOKENDELIMITER_CLOSE
+#define PAGEBUILDER_TOKENDELIMITER_CLOSE  '}'
+#endif
+
+#ifndef PAGEELEMENT_TOKENIDENTIFIER_FILE
+#define PAGEELEMENT_TOKENIDENTIFIER_FILE  "file:"
+#endif
 
 /**
- *  Stores the uri parameter or POST argument that occurred in the http request.
+ * Container for HTTP request parameters from the current client of the
+ * ESP8266WebServer. It provides access methods equivalent to the HTTP
+ * query parameters access provided by the ESP8266WebServer.
  */
 class PageArgument {
  public:
-  PageArgument() : _arguments(nullptr) {}
-  PageArgument(const String& key, const String& value) : _arguments(nullptr) { push(key, value); }
+  PageArgument() {}
+  PageArgument(const String& key, const String& value) { push(key, value); }
   ~PageArgument() {}
-  String  arg(const String& name);
-  String  arg(int i);
-  String  argName(int i);
-  int   args(void);
-  size_t  size(void) { return (size_t)args(); }
-  bool  hasArg(const String& name);
-  void  push(const String& key, const String& value);
+  String  arg(const char* name) const { return arg(String(name)); }
+  String  arg(const String& name) const;
+  String  arg(int i) const;
+  String  argName(int i) const;
+  size_t  args(void) const { return size(); }
+  size_t  size(void) const { return std::distance(_arguments.begin(), _arguments.end()); }
+  bool  hasArg(const char* name) const { return hasArg(String(name)); }
+  bool  hasArg(const String& name) const { return (arg(name) != _nullString); }
+  void  push(const String& name, const String& value);
 
  protected:
-  /** RequestArgument element list structure */
-  typedef struct _RequestArgumentSL {
-    std::unique_ptr<RequestArgument>  _argument;    /**< A unique pointer to a RequestArgument */
-    std::unique_ptr<_RequestArgumentSL> _next;      /**< Pointer to the next element */
-  } RequestArgumentSL;
+  // RequestArgument element structure
+  typedef struct _RequestArguemnt {
+    String  name;
+    String  value;
+  } _RequestArgumentST;
 
-  /** Root element of the list of RequestArgument */
-  std::unique_ptr<RequestArgumentSL>  _arguments;
+  // Root element of the list of RequestArgument
+  using _RequestArgumentLT = std::forward_list<_RequestArgumentST>;
+  _RequestArgumentLT _arguments;
 
  private:
-  RequestArgument*  item(int index);
+  const _RequestArgumentST& _item(int i) const;
+  static const String  _nullString;
 };
 
-/** Wrapper type definition of handler function to handle token. */
+// Wrapper type definition of handler function to handle token.
 typedef std::function<String(PageArgument&)>  HandleFuncT;
 
-/** Structure with correspondence of token and handler defined in PageElement. */
-typedef struct {
-  String        _token;     /**< Token string */
-  HandleFuncT   _builder;   /**< correspondence handler function */
-} TokenSourceST;
-
-/** TokenSourceST linear container type.
- *  Elements of tokens and handlers usually contained in PageElement are 
- *  managed linearly as a container using std::vector.
+/**
+ * TokenSource manages the replacement source for PageElement.
+ * The replacement source is defined as a token together with the
+ * handler. It also supports proper reading depending on the distinction
+ * between the type of PageElement and the storage where the token is
+ * placed (it is a heap area or a text block that is a PROGMEM attribute).
  */
-typedef std::vector<TokenSourceST>  TokenVT;
+class TokenSource {
+ public:
+  // Storage identifier of the token placed.
+  enum STORAGE_CLASS_t {
+    HEAP,         /**< For const char */
+    TEXT,         /**< For __FlashStringHelper */
+    STRING,       /**< For String */
+    FILE          /**< For File */
+  };
+
+  TokenSource() : token(nullptr) {}
+  TokenSource(const char* token, HandleFuncT builder) : token(token), builder(builder), _storage(STORAGE_CLASS_t::HEAP) {}
+  TokenSource(const __FlashStringHelper* token, HandleFuncT builder) : token(reinterpret_cast<PGM_P>(token)), builder(builder), _storage(STORAGE_CLASS_t::TEXT) {}
+  virtual ~TokenSource() {}
+  bool  match(const char* key) const {
+    return !(_storage == HEAP ? strcmp(key, token) : strcmp_P(key, reinterpret_cast<const char*>(token)));
+  }
+
+  PGM_P         token;                /**< a token */
+  HandleFuncT   builder;              /**< User defined handler to replace a token */
+
+ private:
+  STORAGE_CLASS_t  _storage;          /**< Explicit distinction of storage where token is placed */
+};
 
 /**
- *  PageElement class have parts of a HTML page and the components of the part 
- *  to be processed at specified position in the HTML as the token.
+ * TokenSourceST linear container type.
+ * Elements of tokens and handlers usually contained in PageElement are
+ * managed linearly as a container using std::vector.
+ */
+using TokenVT = std::vector<TokenSource>;
+
+/**
+ * A container of the mold as a template that is the basis of the actual
+ * HTML and tokens that are replaced during processing.
  */
 class PageElement {
  public:
-  PageElement() : _mold(nullptr) {}
-  explicit PageElement(const char* mold) : _mold(mold), _source(std::vector<TokenSourceST>()) {}
-  PageElement(const char* mold, TokenVT source) : _mold(mold), _source(source) {}
-  virtual ~PageElement();
-
-  const char*   mold(void) { return _mold; }
-  TokenVT       source(void) { return _source; }
-  String        build(void);
-  static String build(const char* mold, TokenVT tokenSource, PageArgument& args);
-  void          setMold(const char* mold) { _mold = mold; }
-  void          addToken(const String& token, HandleFuncT handler);
+  PageElement() {}
+  explicit PageElement(const char* mold) : _sources(TokenVT()) { setMold(mold); }
+  explicit PageElement(const __FlashStringHelper* mold) : _sources(TokenVT()) { setMold(mold); }
+  PageElement(const char* mold, const TokenVT& sources) : _sources(sources) { setMold(mold); }
+  PageElement(const __FlashStringHelper* mold, const TokenVT& sources) : _sources(sources) { setMold(mold); }
+  ~PageElement() {}
+  void  addToken(const char* token, HandleFuncT handler);
+  void  addToken(const __FlashStringHelper* token, HandleFuncT handler);
+  size_t  build(String& buffer);
+  size_t  build(String& buffer, PageArgument& args);
+  size_t  build(char* buffer, size_t length, PageArgument& args);
+  size_t  getApproxSize(void) const { return _approxSize; }
+  PGM_P mold(void) const { return _mold; }
+  void  reserve(const size_t reserveSize = 0) { _reserveSize = reserveSize; }
+  void  rewind(void);
+  void  setMold(const char* mold);
+  void  setMold(const __FlashStringHelper* mold);
 
  protected:
-  const char* _mold;    //*< A pointer to HTML model string(char array). */
-  TokenVT     _source;  //*< Container of processable token and handler function. */
+  // Saves the lexical scan position when generating page elements from
+  // the mold and tokens. _LexicalIndexST structure is pushed onto the
+  // stack each time a token appearance during the mold scanning.
+  typedef struct {
+    PGM_P _p;                         /**< Position of the mold or token lexical during scanning */
+    unsigned int  _s;                 /**< Read offset in the string replaced from the token */
+    std::shared_ptr<File> _file;
+    TokenSource::STORAGE_CLASS_t  _storage; /**< Distinct class of storage to be scanned */
+  } _LexicalIndexST;
+
+  char    _contextRead(PageArgument& args); /**< Common lexical reader */
+  String  _extractToken(void);        /**< Read as context while replacing the tokens */
+  char    _read(void);                /**< Common lexical reader */
+
+  char    _sub_c;                     /**< Subsequent characters at a token delimiter appearance */
+  size_t  _reserveSize = 0;           /**< Size when reserving read buffer as context */
+  size_t  _approxSize;                /**< Approximate length of context without tokens */
+
+  PGM_P   _mold;                      /**< mold */
+  TokenVT _sources;                   /**< Array of tokens */
+ 
+ private:
+  TokenSource::STORAGE_CLASS_t  _storage;     /**< Storage class of the mold */
+  _LexicalIndexST               _raw;         /**< Position of lexical currently being scanned */
+  std::stack<_LexicalIndexST>   _indexStack;  /**< Stack for the mold scanning position save */
+  String  _fillin;                    /**< Receiving actual string temporarily buffer */
+  bool    _eoe;                       /**< The element has been read */
 };
 
-/**
- *  PageElement container.
- *  The PageBuilder class treats multiple PageElements constituting a html 
- *  page as a reference container as std::reference_wrapper.*/
-typedef std::vector<std::reference_wrapper<PageElement>>  PageElementVT;
-
-/** The type of user-owned function for preparing the handling of current URI. */
+// The type of user-owned function for preparing the handling of current URI.
 typedef std::function<bool(HTTPMethod, String)> PrepareFuncT;
+// The type of user-owned function for uploading.
+typedef std::function<void(const String&, const HTTPUpload&)> UploadFuncT;
 
 /**
- *  PageBuilder class is to make easy to assemble and output html stream 
- *  of web page. The page builder class includes the uri of the page, 
- *  the PageElement indicating the HTML model constituting the page, and 
- *  the on handler called from the ESP8266WebServer class.
- *  This class inherits the RequestHandler class of the ESP8266WebServer class.
+ * The PageBuilder class treats multiple PageElements constituting an
+ * HTML page as a reference container of std::reference_wrapper.
+ * PageElementVT is an alias for the std::vector array that contains
+ * multiple PageElements, allowing Sketch to use the PageElements declaration.
+ */
+using PageElementVT = std::vector<std::reference_wrapper<PageElement>>;
+
+/**
+ * HTML assembly aid.
+ * It inherits from RequestHandler and meets the requirements of the
+ * response handler for url access for the WebServer class.
  */
 class PageBuilder : public RequestHandler {
  public:
-  PageBuilder() : _method(HTTP_ANY), _upload(nullptr), _noCache(true), _cancel(false), _sendEnc(PB_Auto), _rSize(0), _server(nullptr), _canHandle(nullptr) {}
-  explicit PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = PB_Auto) :
-    _element(element),
+  // Identifier of transfer coding method with sending HTML
+  enum TransferEncoding_t {
+    Auto,         /**< Short HTML is sent once, otherwise chunked */
+    ByteStream,   /**< Chunked but not split into each PageElement segment */
+    Chunked,      /**< Chunked with each PageElement segment */
+    Compress,     /**< Not suppoted */
+    Deflate,      /**< Not suppoted */
+    Gzip,         /**< Not suppoted */
+    Identity      /**< Not suppoted */
+  };
+
+  PageBuilder() : _elements(PageElementVT()), _method(HTTP_ANY), _noCache(false), _cancel(false), _enc(Auto) {}
+  explicit PageBuilder(PageElementVT elements, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = Auto) :
+    _elements(elements),
     _method(method),
-    _upload(nullptr),
     _noCache(noCache),
     _cancel(cancel),
-    _sendEnc(chunked),
-    _rSize(0),
-    _server(nullptr),
-    _canHandle(nullptr) {}
-  PageBuilder(const char* uri, PageElementVT element, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = PB_Auto) :
+    _enc(chunked) {}
+  PageBuilder(const char* uri, PageElementVT elements, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = Auto) :
     _uri(String(uri)),
-    _element(element),
-    _method(method),
-    _upload(nullptr),
+    _elements(elements),
+    _method(HTTP_ANY),
     _noCache(noCache),
     _cancel(cancel),
-    _sendEnc(chunked),
-    _rSize(0),
-    _server(nullptr),
-    _canHandle(nullptr) {}
-
-  virtual ~PageBuilder() { _server = nullptr; clearElement(); _username.reset(); _password.reset(); _realm.reset(); }
-
-  /** The type of user-owned function for uploading. */
-  typedef std::function<void(const String&, const HTTPUpload&)> UploadFuncT;
-
-  virtual bool canHandle(HTTPMethod requestMethod, String requestUri) override;
-  virtual bool canUpload(String uri) override;
-  bool handle(WebServerClass& server, HTTPMethod requestMethod, String requestUri) override;
-  virtual void upload(WebServerClass& server, String requestUri, HTTPUpload& upload) override;
-
-  void setUri(const char* uri) { _uri = String(uri); }
-  const char* uri() { return _uri.c_str(); }
-  void insert(WebServerClass& server) { server.addHandler(this); }
-  void addElement(PageElement& element) { _element.push_back(element); }
-  void clearElement();
-  static void sendNocacheHeader(WebServerClass& server);
-  String build(void);
-  String build(PageArgument& args);
-  void atNotFound(WebServerClass& server);
-  void exit404(void);
-  void exitCanHandle(PrepareFuncT prepareFunc) { _canHandle = prepareFunc; }
-  virtual void onUpload(UploadFuncT uploadFunc) { _upload = uploadFunc; }
-  void cancel() { _cancel = true; }
-  void chunked(const TransferEncoding_t devid) { _sendEnc = devid; }
-  void reserve(size_t size) { _rSize = size; }
-  void authentication(const char* username, const char* password, HTTPAuthMethod mode = BASIC_AUTH, const char* realm = NULL, const String& authFail = String(""));
+    _enc(chunked) {}
+  virtual ~PageBuilder() {}
+  void  addElement(PageElement& element) { _elements.push_back(element); }
+  void  atNotFound(WebServer& server);
+  void  authentication(const char* username, const char* password, const HTTPAuthMethod scheme = HTTPAuthMethod::BASIC_AUTH, const char* realm = NULL, const String& authFail = String(""));
+  size_t  build(String& content);
+  size_t  build(String& content, PageArgument& args);
+  void  cancel(const bool cancelation = true) { _cancel = cancelation; }
+  virtual bool  canHandle(HTTPMethod requestMethod, String requestUri) override;
+  virtual bool  canUpload(String uri) override;
+  void  clearElements(void);
+  void  exitCanHandle(PrepareFuncT prepareFunc) { _canHandle = prepareFunc; }
+  bool  handle(WebServer& server, HTTPMethod requestMethod, String requestUri) override;
+  void  insert(WebServer& server) { server.addHandler(this); }
+  virtual void  onUpload(UploadFuncT uploadFunc) { _upload = uploadFunc; }
+  void  reserve(const size_t reserveSize) { _reserveSize = reserveSize; }
+  void  setNoCache(const bool noCache) { _noCache = noCache; }
+  void  setUri(const char* uri) { _uri = String(uri); }
+  void  transferEncoding(const TransferEncoding_t encoding) { _enc = encoding; }
+  virtual void  upload(WebServer& server, String requestUri, HTTPUpload& upload) override;
+  const char* uri(void) const { return _uri.c_str(); }
 
  protected:
-  String        _uri;       /**< uri of this page */
-  PageElementVT _element;   /**< PageElement container */
-  HTTPMethod    _method;    /**< Method of http request to which this page applies. */
-  UploadFuncT   _upload;    /**< 'upload' user owned function */
+  String        _uri;                 /**< Requested URI */
+  PageElementVT _elements;            /**< Array of PageElements */
+  HTTPMethod    _method;              /**< Requested HTTP method */
+  UploadFuncT   _upload;              /**< Upload handler */
 
  private:
-  bool    _sink(int code, WebServerClass& server);  /**< send Content */
-  char*   _digestKey(const char* key);  /**< save authentication parameter */
-  bool    _noCache;               /**< A flag for must-revalidate cache control response */
-  bool    _cancel;                /**< Automatic send cancellation */
-  TransferEncoding_t  _sendEnc;   /**< Use chunked sending */
-  HTTPAuthMethod  _auth;          /**< Authentication method */
-  size_t  _rSize;                 /**< Reserved buffer size for content building */
-  WebServerClass* _server;
-  PrepareFuncT  _canHandle;       /**< 'canHandle' user owned function */
-  std::unique_ptr<char[]> _username;  /**< A user name for authentication */
-  std::unique_ptr<char[]> _password;  /**< A password for authentication */
-  std::unique_ptr<char[]> _realm;     /**< realm for DIGEST */
-  String  _fails;                /**< A message for authentication failed */
+  size_t  _getApproxSize(void) const; /**< Calculate an approximate generating size o the HTML */
+  void    _handle(int code, WebServer& server); /**< URL request handler */
 
-  static const String _emptyString;
+  bool          _noCache;             /**< Need to send the no-cache header */
+  bool          _cancel;              /**< Cancel to send content */
+  TransferEncoding_t  _enc;           /**< Transfer encoding for this sending */
+  HTTPAuthMethod  _auth;              /**< HTTP authentication scheme */
+  size_t        _reserveSize = 0;     /**< Buffer reservation size */
+  WebServer*    _server = nullptr;    /**< An instance of the WebServer that owns this request handler */
+  PrepareFuncT  _canHandle;           /**< An exit of canHandle invoke */
+  std::unique_ptr<char[]> _username;  /**< Username for an auth */
+  std::unique_ptr<char[]> _password;  /**< Password for an auth */
+  std::unique_ptr<char[]> _realm;     /**< REALM for the current auth */
+  String        _fails;               /**< Message for fails with authentication */
+
+  // A set of fixed directives just for sending No-cache headers
+  typedef struct {
+    PGM_P name;
+    PGM_P value;
+  } _httpHeaderConstST;
+  static const _httpHeaderConstST  _headersNocache[] PROGMEM;
 };
 
-#endif
+#endif  // !_PAGEBUILDER_H_

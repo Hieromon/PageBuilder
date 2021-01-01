@@ -208,6 +208,8 @@ PageBuilder::PageBuilder(const char* uri, PageElementVT element, HTTPMethod meth
 PageElement::PageElement();
 PageElement::PageElement(const char* mold);
 PageElement::PageElement(const char* mold, TokenVT source);
+PageElement::PageElement(const __FlashStringHelper* mold);
+PageElement::PageElement(const __FlashStringHelper* mold, TokenVT source);
 ```
 - `mold` : A pointer to HTML model string(const char array, PROGMEM available).
 - `source` : Container of processable token and handler function. A **TokenVT** type is std::vector to the structure with the pair of *token* and *func*. It prepares with an initializer.  
@@ -272,7 +274,7 @@ The sketch sends an http response in the *Token func* then **PageBuilder** shoul
   }
 ```
 
-#### `void PageBuilder::clearElement(void)`  
+#### `void PageBuilder::clearElements(void)`  
 Clear enrolled **PageElement** objects in the **PageBuilder**.
 
 #### `void PageBuilder::exitCanHandle(PrepareFuncT prepareFunc)`  
@@ -295,9 +297,11 @@ Set URI of this page.
 #### `const char* PageBuilder::uri()`  
 Get URI of this page.
 
-#### `void PageBuilder::chunked(const TransferEncoding_t chunked)`
-Set Transfer-Encoding with chunked, or not.
-- `chunked` : Enumeration type for the transfer-encoding.
+#### `void PageBuilder::transferEncoding(const PageBuilder::TransferEncoding_t encoding)`
+Set Transfer-Encoding with chunked, or not. TransferEncoding_t is the enumeration type for the transfer-encoding as following:
+- `Auto` : Automatically switch to chunk transmission according to the length of the content.
+- `ByteStream` : Chunked transmission, no use the String buffer like stream output.
+- `Chunked` : Chunked transfer encoding.
 
 #### `void PageBuilder::reserve(size_t size)`
 Set buffer size for reserved content building buffer.
@@ -316,13 +320,13 @@ Enable authentication when the page is accessed. It can take either DIGEST or BA
 #### `const char* PageElement::mold()`  
 Get mold string in the PageElement.
 
-#### `String PageElement::build()`  
-Returns the HTML element string from `const char* mold` that processed *token* by the user *function* of **TokenVT**.
+#### `void PageElement::build(String& buffer)`  
+Build the HTML element string from `const char* mold` that processed *token* by the user *function* of **TokenVT**.
 
-#### `void PageElement::setMold(const char* mold)`  
+#### `void PageElement::setMold(const char* mold)`<br>`void PageElement::setMold(const __FlashStringHelper* mold)`      
 Sets the source HTML element string.
 
-#### `void PageElement::addToken(String token, HandleFuncT handler)`  
+#### `void PageElement::addToken(const char* token, HandleFuncT handler)`<br>`void PageElement::addToken(const __FlashStringHelper* token, HandlerFuncT handler)`
 Add the source HTML element string.
 
 ## Application hints<br>to reducing the memory for the HTML source
@@ -370,6 +374,10 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 **PB_USE_SPIFFS** macro is valid only when the platform is ESP8266 and will be ignored with ESP32 arduino core. (at least until LittleFS is supported by the ESP32 arduino core)
 
 ## Change log
+
+#### [1.5.0] 2021-01-03
+- Improved memory management
+- Supports PROGMEM natively with PageElement
 
 #### [1.4.2] 2020-05-28
 - Supports LittleFS on ESP8266.

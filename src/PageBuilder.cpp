@@ -3,542 +3,643 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.4.2
- *  @date   2020-05-25
+ *  @version    1.5.0
+ *  @date   2020-12-31
  *  @copyright  MIT license.
  */
 
 #include "PageBuilder.h"
 #include "PageStream.h"
-#if defined(ARDUINO_ARCH_ESP8266)
-#ifdef PB_USE_SPIFFS
-#include <FS.h>
-namespace PageBuilderFS { FS& flash = SPIFFS; };
-#else
-#include <LittleFS.h>
-namespace PageBuilderFS { FS& flash = LittleFS; };
-#endif
-#elif defined(ARDUINO_ARCH_ESP32)
-#include <FS.h>
-#include <SPIFFS.h>
-namespace PageBuilderFS { fs::SPIFFSFS& flash = SPIFFS; };
-#endif
 
-// A maximum length of the content block to switch to chunked transfer.
-#define MAX_CONTENTBLOCK_SIZE 1270
+// Allocate static null string
+const String PageArgument::_nullString = String();
 
-/** 
- *  HTTP header structure.
- */
-typedef struct {
-    const char* _field;         /**< HTTP header field */
-    const char* _directives;    /**< HTTP header directives */
-} HTTPHeaderS;
-
-/**
- *  No cache control http response headers.
- *  The definition of the response header of this fixed character string is 
- *  used in the sendNocacheHeader method.
- */
-static const HTTPHeaderS    _HttpHeaderNocache[] PROGMEM = {
-    { "Cache-Control", "no-cache, no-store, must-revalidate" },
-    { "Pragma", "no-cache" },
-    { "Expires", "-1" }
+// A set of fixed directives just for sending No-cache headers
+const PageBuilder::_httpHeaderConstST  PageBuilder::_headersNocache[] PROGMEM = {
+  { "Cache-Control", "no-cache,no-store,must-revalidate" },
+  { "Pragma", "nocache" },
+  { "Expires", "-1" }
 };
 
-// PageBuilder class methods
+// Determining the valid file system currently configured
+namespace PageBuilderFS { FS& flash = PB_APPLIED_FILESYSTEM; };
 
 /**
- *  Returns whether this page handle HTTP request.<br>
- *  Matches HTTP methods and uri defined in the PageBuilder constructor and 
- *  returns whether this page should handle the request. This function 
- *  overrides the canHandle method of the RequestHandler class.
- *  @param  requestMethod   The http method that caused this http request.
- *  @param  requestUri      The uri of this http request.
- *  @retval true    This page can handle this request.
- *  @retval false   This page does not correspond to this request. 
+ * get request argument value, specifies an i as index to get POST body.
+ * @param   i Index of the arguments
+ * @return  Requested value
+ */
+String PageArgument::arg(int i) const {
+  if (i >= 0 && i < static_cast<int>(size())) {
+    return _item(i).value;
+  }
+  return _nullString;
+}
+
+/**
+ * Get request argument value, use arg("plain") to get POST body
+ * @param   name  Name of requested query parameter
+ * @return  requested value
+ */
+String PageArgument::arg(const String& name) const {
+  for (auto& item : _arguments) {
+    if (item.name.equalsIgnoreCase(name))
+      return item.value;
+  }
+  return _nullString;
+}
+/**
+ * Get request argument name, specifies an i as index to get argument
+ * name contained POST body.
+ * @param i Index of the arguments
+ * @return  Requested argument name, the null string as the specified
+ *          index is out of range.
+ */
+String PageArgument::argName(int i) const {
+  if (i >= 0 && i < static_cast<int>(size())) {
+    return _item(i).name;
+  }
+  return _nullString;
+}
+
+/**
+ * Register new argument with the name and value.
+ * @param   name
+ * @param   value
+ */
+void PageArgument::push(const String& name, const String& value) {
+  _arguments.push_front({ name, value });
+}
+
+/**
+ * Get a set of name and value, returns as _RequestArgumentST.
+ * @param   i Index of registered arguments array
+ * @return  Reference of a _RequestArgumentST
+ */
+const PageArgument::_RequestArgumentST& PageArgument::_item(int i) const {
+  _RequestArgumentLT::const_iterator it = _arguments.cbegin();
+  std::advance(it, i);
+  return *it;
+}
+
+/**
+ * Add a PageElement token, with registering the correspondence handler.
+ * It is an interface for tokens placed in the heap.
+ * @param   token   const char*
+ */
+void PageElement::addToken(const char* token, HandleFuncT handler) {
+  TokenSource source(token, handler);
+  _sources.push_back(source);
+}
+
+/**
+ * Add a PageElement token, with registering the correspondence handler.
+ * It is an interface for tokens placed in the .irom.text segment.
+ * @param   token   const __FlashStringHelper*
+ */
+void PageElement::addToken(const __FlashStringHelper* token, HandleFuncT handler) {
+  TokenSource source(token, handler);
+  _sources.push_back(source);
+}
+
+/**
+ * Construct HTML content, store into the buffer as String.
+ * @param   buffer  Reference of the String storage which the HTML is constructed.
+ * @return  Size of an actual HTML content.
+ */
+size_t PageElement::build(String& buffer) {
+  PageArgument  args;
+  return build(buffer, args);
+}
+
+/**
+ * Construct an HTML content separated by one element.
+ * It will expand the output destination buffer in advance to reserve
+ * the capacity to store constructed HTML.
+ * @param   buffer  Reference of the String storage which the HTML is constructed.
+ * @param   args    Arguments to be passed to the token handler.
+ * @return  Size of an actual HTML content.
+ */
+size_t PageElement::build(String& buffer, PageArgument& args) {
+  char    c;
+  size_t  wc = 0;
+  size_t  rSize = _reserveSize;
+
+  // Expands the output buffer.
+  if (!rSize)
+    rSize = (getApproxSize() + 32) & (~0xe0);
+  buffer.clear();
+  if (!buffer.reserve(rSize)) {
+    PB_DBG("Element reservation failed, free:%" PRIu32 "\n", ESP.getFreeHeap());
+  }
+
+  rewind();                 // Reset the scanning position.
+  c = _contextRead(args);   // Content construction loop
+  while (c) {               // Stops at nul character
+    if (buffer.concat(c))
+      wc++;
+    else {
+      PB_DBG("Element building failure\n");
+      break;
+    }
+    c = _contextRead(args);
+  }
+  return wc;
+}
+
+/**
+ * Construct a content with subsequently for streaming output.
+ * @param   buffer  Output buffer
+ * @param   length  Buffer capacity
+ * @param   args    Arguments to be passed to the token handler.
+ * @return  Size of constructed content
+ */
+size_t PageElement::build(char* buffer, size_t length, PageArgument& args) {
+  size_t  wc = 0;
+
+  while (wc < length) {
+    char  c = _contextRead(args);
+    if (!c)
+      break;
+    *(buffer + wc++) = c;
+  }
+  return wc;
+}
+
+/**
+ * Read as context while replacing the token contained in the mold with
+ * the actual string
+ * @param   args    Arguments to be passed to the token handler.
+ * @return  A read character
+ */
+char PageElement::_contextRead(PageArgument& args) {
+  char  c = '\0';
+
+  // Reading is invalid if the mold is read to the end and the
+  // element has reached the end.
+  if (!_eoe) {
+    if (_sub_c) {
+      // If the token separation is not established after reading the
+      // first delimiter, the character is valid as content.
+      c = _sub_c;
+      _sub_c = '\0';
+    }
+    else {
+      bool  subseq = false;
+      do {
+        c = _read();
+        if (c == PAGEBUILDER_TOKENDELIMITER_OPEN) {
+          _sub_c = _read();
+          if (_sub_c == PAGEBUILDER_TOKENDELIMITER_OPEN) {
+            _sub_c = '\0';
+            // here, extract a token from the _mold
+            String  token = _extractToken();
+            if (token.length()) {
+              // here, matches a token
+              HandleFuncT exchanger = nullptr;
+              for (TokenSource& source : _sources) {
+                // Find the token replacement source
+                if (source.match(token.c_str())) {
+                  exchanger = source.builder;
+                  break;
+                }
+              }
+              if (exchanger) {
+                // Get token replacement string, extract into the content
+                _fillin = exchanger(args);
+                _indexStack.push(_raw);
+                _raw._storage = TokenSource::STORAGE_CLASS_t::STRING;
+                _raw._s = 0;
+                _raw._p = nullptr;
+                c = _read();
+              }
+            }
+            else
+              subseq = true;
+          }
+        }
+      } while (subseq);
+    }
+  }
+  _eoe = !(c);
+  return c;
+}
+
+/**
+ * Extract a token
+ * @return  String of the token
+ */
+String PageElement::_extractToken(void) {
+  String  token;
+
+  char  c = _read();
+  while (c != '\0') {
+    if (c == PAGEBUILDER_TOKENDELIMITER_CLOSE) { 
+      const char  sub_c = _read();
+      if (sub_c == PAGEBUILDER_TOKENDELIMITER_CLOSE || !sub_c)
+        break;
+      else {
+        token += c;
+        token += sub_c;
+      }
+    }
+    else
+      token += c;
+    c = _read();
+  }
+  PB_DBG_DUMB("%s ", token.c_str());
+  return token;
+}
+
+/**
+ * Reads characters according to the storage class where the source is stored.
+ * @return  A read character
+ */
+char PageElement::_read(void) {
+  int c = 0x0;
+
+  if (_raw._storage == TokenSource::STORAGE_CLASS_t::HEAP)
+    c = *_raw._p++;
+  else if (_raw._storage == TokenSource::STORAGE_CLASS_t::TEXT)
+    c = static_cast<char>(pgm_read_byte(_raw._p++));
+  else if (_raw._storage == TokenSource::STORAGE_CLASS_t::STRING) {
+    if (_raw._s < _fillin.length())
+      c = _fillin[_raw._s++];
+    else
+      // Forcibly release the fill string that has been read.
+      _fillin.~String();
+  }
+  else if (_raw._storage == TokenSource::STORAGE_CLASS_t::FILE) {
+    if (!_raw._file) {
+      PB_DBG_DUMB("\n");
+      File  mf = PageBuilderFS::flash.open(_mold, "r");
+      if (mf) {
+        PB_DBG("_mold %s opened, ", mf.name());
+        _raw._file = std::make_shared<File>(mf);
+      }
+      else {
+        PB_DBG("_mold %s open failed", _mold);
+        return '\0';
+      }
+    }
+    if ((c = _raw._file->read()) == -1) {
+      _raw._file->close();
+      _raw._file.reset();
+      c = '\0';
+    }
+  }
+
+  // Just the eos will not indicate the finished reading.
+  if (!c) {
+    if (!_indexStack.empty()) {
+      // Recovers the last reading address the mold during reading.
+      // And returns to the previous reading process.
+      _raw = _indexStack.top();
+      _indexStack.pop();
+      c = _read();
+    }
+  }
+  return static_cast<char>(c);
+}
+
+/**
+ * Reset the scanning address of the mold,
+ * also the token replacement string.
+ */
+void PageElement::rewind(void) {
+  while (!_indexStack.empty())
+    _indexStack.pop();
+  _raw._storage = _storage;
+  _raw._s = 0;
+  _raw._p = _mold;
+  _sub_c = '\0';
+  _eoe = false;
+}
+
+/**
+ * Save the mold string as a type of PGM_P.
+ * @param  mold   const char* mold string
+ */
+void PageElement::setMold(const char* mold) {
+  if (strncmp(mold, PAGEELEMENT_TOKENIDENTIFIER_FILE, strlen(PAGEELEMENT_TOKENIDENTIFIER_FILE))) {
+    _mold = mold;
+    _storage = TokenSource::HEAP;
+    _approxSize = strlen(_mold);
+  }
+  else {
+    _mold = mold + strlen(PAGEELEMENT_TOKENIDENTIFIER_FILE);
+    _storage = TokenSource::FILE;
+  }
+}
+
+/**
+ * Save the mold string stored in the .irom.text section.
+ * @param   mold   __FlashStringHelper class
+ */
+void PageElement::setMold(const __FlashStringHelper* mold) {
+  _mold = reinterpret_cast<PGM_P>(mold);
+  _storage = TokenSource::TEXT;
+  _approxSize = strlen_P(_mold);
+}
+
+/**
+ * Register the page as a 404 page into the WebServer.
+ * @param   server  Reference of WebServer to register the onNotFound exit.
+ */
+void PageBuilder::atNotFound(WebServer& server) {
+  server.onNotFound([&]() {
+    setNoCache(true);
+    _handle(404, server);
+  });
+}
+
+/**
+ * Register the page for authentication.
+ * @param   username  The user name
+ * @param   password  The password
+ * @param   scheme    HTTP authentication scheme
+ * @param   realm     The realm
+ * @param   autoFail  Message for fails with authentication
+ */
+void PageBuilder::authentication(const char* username, const char* password, const HTTPAuthMethod scheme, const char* realm, const String& authFail) {
+  _username.reset(new char[strlen(username) + sizeof('\0')]);
+  strcpy(_username.get(), username);
+  _password.reset(new char[strlen(password) + sizeof('\0')]);
+  strcpy(_password.get(), password);
+  _realm.reset(new char[strlen(realm) + sizeof('\0')]);
+  strcpy(_realm.get(), realm);
+  _fails = authFail;
+  _auth = scheme;
+}
+
+/**
+ * Construct an HTML content, build it as String.
+ * @param   content   Building content store buffer
+ * @return  Content length built.
+ */
+size_t PageBuilder::build(String& content) {
+  PageArgument  args;
+
+  // Obtain requested arguments from the WebServer,
+  // also reconstruct to pass the page handler.
+  if (!_server) {
+    for (uint8_t i = 0; i < _server->args(); i++)
+      args.push(_server->argName(i), _server->arg(i));
+  }
+
+  // Make an content of the page.
+  return build(content, args);
+}
+
+/**
+ * Construct an HTML content, build it as String.
+ * @param   content   Building content store buffer
+ * @param   args      HTTP request arguments to pass to the handler.
+ * @return  Content length built.
+ */
+size_t PageBuilder::build(String& content, PageArgument& args) {
+  size_t  cc = 0;
+
+  size_t  rSize = _reserveSize;
+  if (!rSize)
+    rSize = _getApproxSize();
+  PB_DBG("Buf preserve:%d, Free heap:%" PRIu32 " ", rSize, ESP.getFreeHeap());
+  if (!content.reserve(rSize)) {
+    PB_DBG_DUMB("\n");
+    PB_DBG("Content preliminary allocation failed. ");
+  }
+
+  // Content is buffered after combining all the elements at once.
+  // If the buffer does not have enough space to store the content
+  // generated on a PageElement basis, it will lose the content.
+  for (auto& element : _elements) {
+    String  elementBlock;
+    cc += element.get().build(elementBlock, args);
+    if (!content.concat(elementBlock)) {
+      PB_DBG("Content lost, len:%u free:%" PRIu32, elementBlock.length(), ESP.getFreeHeap());
+      break;
+    }
+  }
+  PB_DBG_DUMB("\n");
+  return cc;
+}
+
+/**
+ * Actual the canHandle function which overrides the RequestHandler.
+ * @param   requestMethod   HTTP method of the current request.
+ * @param   RequestUri      Requested URI
+ * @return  true  the PageBuilder can handle this request.
+ * @return  false 
  */
 bool PageBuilder::canHandle(HTTPMethod requestMethod, String requestUri) {
-    if (_canHandle) {
-        return _canHandle(requestMethod, requestUri);
-    }
-    else {
-        if (_method != HTTP_ANY && _method != requestMethod)
-            return false;
-        else if (requestUri != _uri)
-            return false;
-        return true;
-    }
+  if (_canHandle)
+    return _canHandle(requestMethod, requestUri);
+  else {
+    if (_method != HTTP_ANY && _method != requestMethod)
+      return false;
+    else if (requestUri != _uri)
+      return false;
+    return true;
+  }
 }
 
 /**
- *  Returns whether the page can be uploaded.<br>
- *  However, since the PageBuilder class does not support uploading, it always 
- *  returns false. This function overrides the canUpload method of the 
- *  RequestHandler class.
- *  @param  requestUri  The uri of this upload request.
- *  @retval false   This page cannot receive the upload request.
+ * Actual the canHandle function which overrides the RequestHandler.
+ * @param   uri   Requested uploading URI.
+ * @return  true  The uploader will activate.
+ * @return  false The uploader does not correspond to the requested URI.
  */
 bool PageBuilder::canUpload(String uri) {
-    PB_DBG("%s upload request\n", uri.c_str());
-    if (!_upload || !canHandle(HTTP_POST, uri))
-        return false;
-    return true;
-}
-
-/**
- *  Invokes a user sketch function which would be registered by the
- *  onUpload function to process the received upload data.
- *  @param  server      A reference of ESP8266WebServer.
- *  @param  requestUri  Request uri of this time.
- *  @param  upload      A reference of the context of the HTTPUpload structure. 
- */
-void PageBuilder::upload(WebServerClass& server, String requestUri, HTTPUpload& upload) {
-    (void)server;
-    if (canUpload(requestUri))
-        _upload(requestUri, upload);
-}
-
-/**
- *  Save the parameters for authentication.
- *  @param  username  A user name for authentication.
- *  @param  password  A password
- *  @param  mode      Authentication method
- *  @param  realm     A realm
- *  @param  authFail  Message string for authentication failed
- */
-void PageBuilder::authentication(const char* username, const char* password, HTTPAuthMethod mode, const char* realm, const String& authFail) {
-    _auth = mode;
-    _username.reset(_digestKey(username));
-    _password.reset(_digestKey(password));
-    _realm.reset(_digestKey(realm));
-    _fails = String(authFail.c_str());
-}
-
-/**
- *  Hold an authentication parameter
- *  @param  key  Authentication parameter string
- *  @return A pointer of a held string
- */
-char* PageBuilder::_digestKey(const char* key) {
-    if (key && strlen(key)) {
-        char* cb = new char[strlen(key) + sizeof('\0')];
-        strcpy(cb, key);
-        return cb;
-    }
-    return nullptr;
-}
-
-/**
- *  Generates HTML content and sends it to the client in response.<br>
- *  This function overrides the handle method of the RequestHandler class.
- *  @param  server          A reference of ESP8266WebServer.
- *  @param  requestMethod   Method of http request that originated this response.
- *  @param  requestUri      Request uri of this time.
- *  @retval true    A response send.
- *  @retval false   This request could not handled.
- */
-bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod requestMethod, String requestUri) {
-    // Retrieve request arguments
-    PageArgument args;
-    for (uint8_t i = 0; i < server.args(); i++)
-        args.push(server.argName(i), server.arg(i));
-
-    // Invoke page building function
-    _cancel = false;
-
-    // If the page is must-revalidate, send a header
-    if (_noCache)
-        sendNocacheHeader(server);
-
-    // send http content to client
-    if (!_cancel) {
-        String  content;                // Content is available only in a NOT _cancel block
-        size_t  contLen = 0;
-        bool    _chunked = (_sendEnc == PB_Chunk);
-
-        if (_sendEnc == PB_ByteStream || _sendEnc == PB_Auto) {
-            // Build the content, and determine the transfer mode by
-            // the length of the built content.
-            content = build(args);
-            contLen = content.length();
-            if (_sendEnc == PB_Auto && contLen >= MAX_CONTENTBLOCK_SIZE)
-                _chunked = true;
-        }
-        PB_DBG("Free heap:%d, content len.:", ESP.getFreeHeap());
-        if (_chunked)
-            PB_DBG_DUMB("%s\n", "unknown");
-        else
-            PB_DBG_DUMB("%d\n", contLen);
-        PB_DBG("Res:%d, Chunked:%d\n", code, _sendEnc);
-        // Start content transfer, switch the transfer method depending
-        // on whether it is chunked transfer or byte stream.
-        if (_chunked) {
-            PB_DBG("Transfer-Encoding:chunked\n");
-            server.setContentLength(CONTENT_LENGTH_UNKNOWN);
-            server.send(code, F("text/html"), _emptyString);
-            if (_sendEnc == PB_Chunk) {
-                // Chunk block is a PageElement unit.
-                for (uint8_t i = 0; i < _element.size(); i++) {
-                    PageElement& element = _element[i].get();
-                    content = PageElement::build(element.mold(), element.source(), args);
-                    if (content.length())
-                        server.sendContent(content);
-                }
-            }
-            else {
-                // Here, PB_Auto turned to chunk mode.
-                size_t  pos = 0;
-                while (pos < contLen) {
-                    String contBuffer = content.substring(pos, pos + MAX_CONTENTBLOCK_SIZE); 
-                    server.sendContent(contBuffer);
-                    pos += MAX_CONTENTBLOCK_SIZE;
-                }
-            }
-            server.sendContent(_emptyString);
-        }
-        else {
-            if (_sendEnc == PB_ByteStream || contLen > MAX_CONTENTBLOCK_SIZE) {
-                PageStream  contStream(content);
-                server.streamFile(contStream, F("text/html"));
-                server.client().flush();
-            } else {
-                server.setContentLength(contLen);
-                server.send(code, F("text/html"), content);
-            }
-        }
-    }
-    return true;
-}
-
-/**
- *  The page builder handler generates HTML based on PageElement and sends
- *  it to the client.
- *  @param  server          A reference of ESP8266WebServer.
- *  @param  requestMethod   Method of http request that originated this response.
- *  @param  requestUri      Request uri of this time.
- *  @retval true    A response send.
- *  @retval false   This request could not handled.
- */
-bool PageBuilder::handle(WebServerClass& server, HTTPMethod requestMethod, String requestUri) {
-    // Screening the available request
-    if (!canHandle(requestMethod, requestUri))
-        return false;
-
-    if (_username) {
-        // Should be able to authenticate with the specified username.
-        if (!server.authenticate(_username.get(), _password.get())) {
-            PB_DBG("failed to authenticate\n");
-            server.requestAuthentication(_auth, _realm.get(), _fails);
-            return true;
-        }
-    }
-
-    // Throw with 200 response
-    return _sink(200, server);
-}
-
-/**
- *  Send a 404 response.
- */
-void PageBuilder::exit404(void) {
-    if (_server != nullptr) {
-        _noCache = true;
-
-        // Throw with 404 response
-        _sink(404, *_server);
-    }
-}
-
-/**
- *  Dispose collection for cataloged PageElement.
- */
-void PageBuilder::clearElement() {
-    _element.clear();
-    PageElementVT().swap(_element);
-}
-
-/**
- *  Send a http header for the page to be must-revalidate on the client.
- *  @param  server  A reference of ESP8266WebServer.
- */
-void PageBuilder::sendNocacheHeader(WebServerClass& server) {
-    for (uint8_t i = 0; i < sizeof(_HttpHeaderNocache) / sizeof(HTTPHeaderS); i++)
-        server.sendHeader(_HttpHeaderNocache[i]._field, _HttpHeaderNocache[i]._directives);
-}
-
-/**
- *  Register the not found page to ESP8266Server.
- *  @param  server  A reference of ESP8266WebServer.
- */
-void PageBuilder::atNotFound(WebServerClass& server) {
-    _server = &server;
-    server.onNotFound(std::bind(&PageBuilder::exit404, this));
-}
-
-/**
- *  A wrapper function for making response content without specifying the 
- *  parameter of http request.
- *  This function is called from other than the On handle action of 
- *  ESP8266WebServer and assumes execution of content creation only by PageElement. 
- *  @retval String of content built by the instance of PageElement.
- */
-String PageBuilder::build(void) {
-    PageArgument    args;
-    return build(args);
-}
-
-/**
- *  Build html content with handling the PageElement elements.<br>
- *  Assemble the content by calling the build method of all owning PageElement 
- *  and concatenating the returned string.
- *  @param  args    URI parameter when this page is requested.
- *  @retval A html content string.  
- */
-String PageBuilder::build(PageArgument& args) {
-    String content = String("");
-
-    if (_rSize > 0) {
-        if (content.reserve(_rSize)) {
-            PB_DBG("Content buffer %ld reserved\n", (long)_rSize);
-        }
-        else {
-            PB_DBG("Content buffer cannot reserve(%ld)\n", (long)_rSize);
-        }
-    }
-
-    for (uint8_t i = 0; i < _element.size(); i++) {
-        PageElement& element = _element[i].get();
-        String segment = PageElement::build(element.mold(), element.source(), args);
-        if (segment.length()) {
-            if (!content.concat(segment)) {
-                PB_DBG("Content lost, length:%d, free heap:%ld\n", segment.length(), (long)ESP.getFreeHeap());
-            }
-        }
-    }
-    return content;
-}
-
-/**
- *  Initialize an empty string to allow returning const String& with nothing.
- */
-const String PageBuilder::_emptyString = String("");
-
-// PageElement class methods.
-
-/**
- *  PageElement destructor
- */
-PageElement::~PageElement() {
-    _source.clear();
-    TokenVT().swap(_source);
-    _mold = nullptr;
-}
-
-/***
- *  Add new token to the page element.
- *  A token is pare of a token string and handler function.
- *  @param  token   A token string.
- *  @param  handler A handler function. 
- */
-void PageElement::addToken(const String& token, HandleFuncT handler) {
-    TokenSourceST  source = TokenSourceST();
-    source._token = token;
-    source._builder = handler;
-    _source.push_back(source);
-}
-
-/***
- *  @brief  Build html source.<br>
- *  It is a wrapper entry for calling the static PageElement::build method.
- *  @retval A string generated from the mold of this instance.
- */
-String PageElement::build() {
-    PageArgument    args;
-    return String(PageElement::build(_mold, _source, args));
-}
-
-/**
- *  Generate a actual string from the mold including the token. also, this 
- *  function is static to reduce the heap size. 
- *  @param  mold        A pointer of constant mold character array. A string
- *  following the "file:" prefix indicates the filename of the SPIFFS file system.
- *  @param  tokenSource A structure that anchors user functions which processes
- *  tokens defined in the mold.
- *  @param  args        PageArgument instance when this handler requested.
- *  @retval A string containing the content of the token actually converted 
- *  by the user function.
- */
-String PageElement::build(const char* mold, TokenVT tokenSource, PageArgument& args) {
-    int     contextLength;
-    int     scanIndex = 0;
-    String  templ = FPSTR(mold);
-    String  content = String("");
-
-    // Determining the origin of the mold.
-    // When the mold parameter has the prefix "file:", read the mold source
-    // from the file.
-    if (templ.startsWith(PAGEELEMENT_FILE)) {
-        File mf = PageBuilderFS::flash.open(templ.substring(strlen(PAGEELEMENT_FILE)), "r");
-        if (mf) {
-            templ = mf.readString();
-            mf.close();
-        }
-        else
-            templ = String("");
-    }
-    contextLength = templ.length();
-    while (contextLength > 0) {
-        String token;
-        int tokenStart, tokenEnd;
-
-        // Extract the braced token
-        if ((tokenStart = templ.indexOf("{{", scanIndex)) >= 0) {
-            tokenEnd = templ.indexOf("}}", tokenStart);
-            if (tokenEnd > tokenStart)
-                token = templ.substring(tokenStart + 2, tokenEnd);
-            else
-                tokenStart = tokenEnd = templ.length();
-        }
-        else {
-            tokenStart = tokenEnd = templ.length();
-        }
-        // Materialize the template which would be stored to content
-        // content += templ.substring(scanIndex, tokenStart);
-        bool grown = content.concat(templ.substring(scanIndex, tokenStart));
-        if (grown) {
-            scanIndex = tokenEnd + 2;
-            contextLength = templ.length() - scanIndex;
-
-            // Invoke the callback function corresponding to the extracted token
-            for (uint8_t i = 0; i < tokenSource.size(); ++i)
-                if (tokenSource[i]._token == token) {
-                    grown = content.concat(tokenSource[i]._builder(args));
-                    break;
-                }
-        }
-        if (!grown) {
-            PB_DBG("Failed building, free heap:%ld\n", (long)ESP.getFreeHeap());
-            break;
-        }
-    }
-
-    PB_DBG("at leaving build: %ld free\n", (long)ESP.getFreeHeap());
-    return content;
-}
-
-// PageArgument class methods.
-
-/**
- *  Returns a parameter string specified argument name.
- *  @param  name    A parameter argument name.
- *  @retval A parameter value string.
- */
-String PageArgument::arg(const String& name) {
-    for (uint8_t i = 0; i < size(); i++) {
-        RequestArgument*    argItem = item(i);
-        if (argItem->_key == name)
-            return argItem->_value;
-    }
-    return String();
-}
-
-/**
- *  Returns a parameter string specified index of arguments array.
- *  @param  i   Index of argument array.
- *  @retval A parameter value string.
- */
-String PageArgument::arg(int i) {
-    if ((size_t)i < size()) {
-        RequestArgument*    argItem = item(i);
-        return argItem->_value;
-    }
-    return String();
-}
-
-/**
- *  Returns a argument string specified index of arguments array.
- *  @param  i   Index of argument array.
- *  @retval A string of argument name.
- */
-String PageArgument::argName(int i) {
-    if ((size_t)i < size()) {
-        RequestArgument*    argItem = item(i);
-        return argItem->_key;
-    }
-    return String();
-}
-
-/**
- *  Returns number of parameters of this http request.
- *  @retval Number of parameters.
- */
-int PageArgument::args() {
-    int size = 0;
-    RequestArgumentSL*  argList = _arguments.get();
-    while (argList != nullptr) {
-        size++;
-        argList = argList->_next.get();
-    }
-    return size;
-}
-
-/**
- *  Returns whether the http request to PageBuilder that invoked this PageElement
- *  contained parameters.
- *  @retval true    This http request contains parameter(s).
- *  @retval false   This http request has no parameter.
- */
-bool PageArgument::hasArg(const String& name) {
-    for (uint8_t i = 0; i < size(); i++) {
-        RequestArgument*    argument = item(i);
-        if (argument == nullptr)
-            return false;
-        if (argument->_key == name)
-            return true;
-    }
+  PB_DBG("%s upload request\n", uri.c_str());
+  if (!_upload || !canHandle(HTTP_POST, uri))
     return false;
+  return true;
 }
 
 /**
- *  Append argument of http request consisting of parameter name and 
- *  argument pair.
- *  @param  key     A parameter name string.
- *  @param  value   A parameter value string.
+ * Clear the registered PageElements.
  */
-void PageArgument::push(const String& key, const String& value) {
-    RequestArgument*    newArg = new RequestArgument();
-    newArg->_key = key;
-    newArg->_value = value;
-    RequestArgumentSL*  newList = new RequestArgumentSL();
-    newList->_argument.reset(newArg);
-    newList->_next.reset(nullptr);
-    RequestArgumentSL*  argList = _arguments.get();
-    if (argList == nullptr) {
-        _arguments.reset(newList);
+void PageBuilder::clearElements(void) {
+  _elements.clear();
+  PageElementVT().swap(_elements);
+}
+
+/**
+ * Calculates the approximate content size,
+ * not including token replacement.
+ * @return  Size of the generating content.
+ */
+size_t PageBuilder::_getApproxSize(void) const {
+  size_t  approxSize = 0;
+
+  for (auto& element : _elements)
+    approxSize += (element.get().getApproxSize() + 16) & (~0xf);
+  return approxSize;
+}
+
+/**
+ * RequestHandler::handle function wrapper. It is responsible for the
+ * "canHandle" identification and certification.
+ * @param  server         Reference of the calling WebServer instance
+ * @param  requestMethod  The HTTP request that made this call
+ * @param  requestUri     The URI for this request
+ * @return true   sent successfull
+ * @return false  failed
+ */
+bool PageBuilder::handle(WebServer& server, HTTPMethod requestMethod, String requestUri) {
+#ifdef PB_DEBUG
+  const char* _httpMethod;
+  switch (requestMethod) {
+  case HTTP_ANY:
+    _httpMethod = "ANY";
+    break;
+  case HTTP_GET:
+    _httpMethod = "GET";
+    break;
+  case HTTP_HEAD:
+    _httpMethod = "HEAD";
+    break;
+  case HTTP_POST:
+    _httpMethod = "POST";
+    break;
+  case HTTP_PUT:
+    _httpMethod = "PUT";
+    break;
+  case HTTP_PATCH:
+    _httpMethod = "PATCH";
+    break;
+  case HTTP_DELETE:
+    _httpMethod = "DELETE";
+    break;
+  case HTTP_OPTIONS:
+    _httpMethod = "OPTIONS";
+    break;
+  default:
+    _httpMethod = "?";
+  }
+  PB_DBG("HTTP_%s %s\n", _httpMethod, requestUri.c_str());
+#endif
+
+  if (!canHandle(requestMethod, requestUri))
+    return false;
+
+  if (_username) {
+    PB_DBG("auth:%s/%s %s", _username.get(), _password.get(), _auth == HTTPAuthMethod::BASIC_AUTH ? "basic" : "digest");
+    if (!server.authenticate(_username.get(), _password.get())) {
+      PB_DBG_DUMB(" failure\n");
+      server.requestAuthentication(_auth, _realm.get(), _fails);
+      return true;
+    }
+    PB_DBG_DUMB("\n");
+  }
+
+  _handle(200, server);
+  return true;
+}
+
+/**
+ * The actual existence of the URL handler function called from
+ * the WebServer instance.
+ * @param   code    HTTP code to respond to the request.
+ * @param   server  Reference of the WebServer instance.
+ */
+void PageBuilder::_handle(int code, WebServer& server) {
+  PageArgument  args;
+
+  // Make a set of requested arguments
+  for (uint8_t i = 0; i < server.args(); i++)
+    args.push(server.argName(i), server.arg(i));
+
+  if (_noCache)
+    for (auto& httpHeader : _headersNocache) {
+      server.sendHeader(String(FPSTR(httpHeader.name)), String(FPSTR(httpHeader.value)));
+    }
+
+  if (_enc == Auto) {
+    // TransferEncoding:Auto
+    // PageBuilder generates the whole content of the page into a String
+    // instance at once. If If its size exceeds PAGEBUILDER_CONTENTBLOCK_SIZE,
+    // it will try to output the stream via streamFile. In that case,
+    // Transfer-encoding will be chunked.
+    String  contentBlock;
+    build(contentBlock, args);
+    if (!_cancel) {
+      if (contentBlock.length() > PAGEBUILDER_CONTENTBLOCK_SIZE) {
+        WiFiClient  client = server.client();
+        PageStream  content(contentBlock, client);
+        server.streamFile(content, F("text/html"));
+      }
+      else
+        server.send(code, "text/html", contentBlock);
+      PB_DBG("blk:%u\n", contentBlock.length());
     }
     else {
-        while (argList->_next.get() != nullptr)
-            argList = argList->_next.get();
-        argList->_next.reset(newList);
+      PB_DBG("Send canceled\n");
     }
+  }
+
+  else if (_enc == Chunked || _enc == ByteStream) {
+    // TransferEncoding:Chunked or ByteStream
+    // Chunk transmission applies to both of these transmission schemes.
+    PB_DBG("Chunked, ");
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(code, "text/html", "");
+    if (_enc == Chunked) {
+      // Chunks generate and send a page segment for each element of
+      // PageElements. PageBuilder needs enough heap space to store a
+      // segment of the page content into a String instance.
+      for (auto& element : _elements) {
+        String  contentBlock;
+        size_t  blkSize = element.get().build(contentBlock, args);
+        server.sendContent_P(contentBlock.c_str());
+        (void)(blkSize);
+        PB_DBG("blk:%u\n", blkSize);
+      }
+    }
+    else {
+      // ByteStream sending is similar to a chunk, creates a segment of
+      // the page for each content element, but not through a String
+      // instance. It allocates a fixed-length buffer and reuses it, so
+      // it consumes less heap space regardless of HTML generating size.
+      char* cBuffer = reinterpret_cast<char*>(malloc(PAGEBUILDER_CONTENTBLOCK_SIZE));
+      if (cBuffer) {
+        char* bp = cBuffer;
+        size_t  cBufferLen = PAGEBUILDER_CONTENTBLOCK_SIZE;
+        for (auto& element : _elements) {
+          PageElement&  pe = element.get();
+          pe.rewind();
+          size_t  blkSize = pe.build(bp, cBufferLen, args);
+          while (blkSize) {
+            server.sendContent_P(cBuffer, blkSize);
+            PB_DBG_DUMB("blk:%u ", blkSize);
+            bp += blkSize;
+            cBufferLen -= blkSize;
+            if (!cBufferLen) {
+              bp = cBuffer;
+              cBufferLen = PAGEBUILDER_CONTENTBLOCK_SIZE;
+            }
+            blkSize = pe.build(bp, cBufferLen, args);
+          }
+        }
+        free(cBuffer);
+        PB_DBG_DUMB("\n");
+      }
+      else {
+        PB_DBG_DUMB("failed, free:%" PRIu32 "\n", ESP.getFreeHeap());
+      }
+    }
+    server.sendContent("");
+  }
 }
 
 /**
- *  Returns a pointer to RequestArgument instance specified index of
- *  parameters array.
- *  @param  index   A index of parameter arguments array.
- *  @retval A pointer to RequestArgument.
+ * Wrapper for the uploader
+ * @param   server      Reference of the WebServer
+ * @param   requestUri  Uploading URI
+ * @param   upload      The uploader
  */
-RequestArgument* PageArgument::item(int index) {
-    RequestArgumentSL*  argList = _arguments.get();
-    while (index--) {
-        if (argList == nullptr)
-            break;
-        argList = argList->_next.get();
-    }
-    if (argList != nullptr)
-        return argList->_argument.get();
-    else
-        return nullptr;
+void PageBuilder::upload(WebServer& server, String requestUri, HTTPUpload& upload) {
+  (void)(server);
+  if (canUpload(requestUri))
+    _upload(requestUri, upload);
 }

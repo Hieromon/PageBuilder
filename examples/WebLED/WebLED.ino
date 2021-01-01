@@ -1,20 +1,28 @@
+/*
+  WebLED.ino, Example for the PageBuilder library.
+  Copyright (c) 2017, 2020, Hieromon Ikasamo
+  https://github.com/Hieromon/PageBuilder
+  This software is released under the MIT License.
+  https://opensource.org/licenses/MIT
+
+  This example demonstrates the typical behavior of PageBuilder. It also
+  represents a basic structural HTML definition with the PageElement.
+*/
+
 #if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
 #include <WebServer.h>
-#ifndef LED_BUILTIN
-#define LED_BUILTIN 2 // Adjust to the actual board
 #endif
-#endif
-#include "PageBuilder.h"
+#include <PageBuilder.h>
 #include "WebLED.h"   // Only the LED lighting icon
 
 // Web page structure is described as follows.
 // It contains two tokens as {{STYLE}} and {{LEDIO}} also 'led'
 //  parameter for GET method.
-static const char PROGMEM _PAGE_LED[] = R"rawliteral(
+static const char _PAGE_LED[] PROGMEM = R"(
 <!DOCTYPE html>
 <html>
 <head>
@@ -35,11 +43,11 @@ static const char PROGMEM _PAGE_LED[] = R"rawliteral(
   </div>
 </body>
 </html>
-)rawliteral";
+)";
 
 // A style description can be separated from the page structure.
 // It expands from {{STYLE}} caused by declaration of 'Button' PageElement.
-static const char PROGMEM _STYLE_BUTTON[] = R"rawliteral(
+static const char _STYLE_BUTTON[] PROGMEM = R"(
 body {-webkit-appearance:none;}
 p {
   font-family:'Arial',sans-serif;
@@ -67,11 +75,17 @@ p {
 }
 .one a {text-decoration:none;}
 .img {text-align:center;}
-)rawliteral";
+)";
 
 // ONBOARD_LED is WiFi connection indicator.
-// LED_BUILTIN is controled by the web page.
+// LED_BUILTIN is controlled by the web page.
+#ifndef LED_BUILTIN
 #define ONBOARD_LED 16    // Different pin assignment by each module
+#elif defined(LED_BUILTIN_AUX)
+#define ONBOARD_LED LED_BUILTIN_AUX
+#else
+#define ONBOARD_LED LED_BUILTIN
+#endif
 
 // Get an architecture of compiled
 String getArch(PageArgument& args) {
@@ -105,7 +119,7 @@ String ledIO(PageArgument& args) {
 }
 
 // Page construction
-PageElement Button(_PAGE_LED, {
+PageElement Button(FPSTR(_PAGE_LED), {
   {"STYLE", [](PageArgument& arg) { return String(FPSTR(_STYLE_BUTTON)); }},
   {"ARCH", getArch },
   {"LEDIO", ledIO }
@@ -144,6 +158,7 @@ void setup() {
   Serial.println("Connected to " + String(SSID));
 
   LEDPage.authentication(username, password, DIGEST_AUTH, "WebLED");
+  LEDPage.transferEncoding(PageBuilder::TransferEncoding_t::ByteStream);
   LEDPage.insert(Server);
   Server.begin();
 
