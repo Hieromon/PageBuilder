@@ -362,13 +362,10 @@ void PageBuilder::atNotFound(WebServer& server) {
  * @param   autoFail  Message for fails with authentication
  */
 void PageBuilder::authentication(const char* username, const char* password, const HTTPAuthMethod scheme, const char* realm, const String& authFail) {
-  _username.reset(new char[strlen(username) + sizeof('\0')]);
-  strcpy(_username.get(), username);
-  _password.reset(new char[strlen(password) + sizeof('\0')]);
-  strcpy(_password.get(), password);
-  _realm.reset(new char[strlen(realm) + sizeof('\0')]);
-  strcpy(_realm.get(), realm);
-  _fails = authFail;
+  _username = String(username);
+  _password = String(password);
+  _realm = String(realm);
+  _fails = String(authFail);
   _auth = scheme;
 }
 
@@ -523,11 +520,15 @@ bool PageBuilder::handle(WebServer& server, HTTPMethod requestMethod, String req
   if (!canHandle(requestMethod, requestUri))
     return false;
 
-  if (_username) {
-    PB_DBG("auth:%s/%s %s", _username.get(), _password.get(), _auth == HTTPAuthMethod::BASIC_AUTH ? "basic" : "digest");
-    if (!server.authenticate(_username.get(), _password.get())) {
+  if (_username.length()) {
+    PB_DBG("auth:%s");
+    if (_password.length()) {
+      PB_DBG_DUMB("/%s", _password.c_str());
+    }
+    PB_DBG_DUMB(" %s", _auth == HTTPAuthMethod::BASIC_AUTH ? "basic" : "digest");
+    if (!server.authenticate(_username.c_str(), _password.c_str())) {
       PB_DBG_DUMB(" failure\n");
-      server.requestAuthentication(_auth, _realm.get(), _fails);
+      server.requestAuthentication(_auth, _realm.c_str(), _fails);
       return true;
     }
     PB_DBG_DUMB("\n");

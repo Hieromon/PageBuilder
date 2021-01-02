@@ -296,9 +296,9 @@ class PageBuilder : public RequestHandler {
   size_t        _reserveSize = 0;     /**< Buffer reservation size */
   WebServer*    _server = nullptr;    /**< An instance of the WebServer that owns this request handler */
   PrepareFuncT  _canHandle;           /**< An exit of canHandle invoke */
-  std::unique_ptr<char[]> _username;  /**< Username for an auth */
-  std::unique_ptr<char[]> _password;  /**< Password for an auth */
-  std::unique_ptr<char[]> _realm;     /**< REALM for the current auth */
+  String        _username;            /**< Username for an auth */
+  String        _password;            /**< Password for an auth */
+  String        _realm;               /**< REALM for the current auth */
   String        _fails;               /**< Message for fails with authentication */
 
   // A set of fixed directives just for sending No-cache headers
