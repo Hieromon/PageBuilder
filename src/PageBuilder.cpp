@@ -211,7 +211,8 @@ char PageElement::_contextRead(PageArgument& args) {
                 _raw._storage = TokenSource::STORAGE_CLASS_t::STRING;
                 _raw._s = 0;
                 _raw._p = nullptr;
-                c = _read();
+                // Read context again due to source changes
+                c = _contextRead(args);
               }
             }
             else
