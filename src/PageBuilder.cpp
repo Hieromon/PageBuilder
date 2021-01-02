@@ -534,7 +534,12 @@ bool PageBuilder::handle(WebServer& server, HTTPMethod requestMethod, String req
     PB_DBG_DUMB("\n");
   }
 
+  // Reset the sending cancel, invoke the content generating and send
+  _cancel = false;
   _handle(200, server);
+  if (_cancel) {
+    PB_DBG("Send canceled\n");
+  }
   return true;
 }
 
@@ -574,17 +579,13 @@ void PageBuilder::_handle(int code, WebServer& server) {
         server.send(code, "text/html", contentBlock);
       PB_DBG("blk:%u\n", contentBlock.length());
     }
-    else {
-      PB_DBG("Send canceled\n");
-    }
   }
 
   else if (_enc == Chunked || _enc == ByteStream) {
     // TransferEncoding:Chunked or ByteStream
     // Chunk transmission applies to both of these transmission schemes.
     PB_DBG("Chunked, ");
-    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
-    server.send(code, "text/html", "");
+    bool  firstOrder = true;
     if (_enc == Chunked) {
       // Chunks generate and send a page segment for each element of
       // PageElements. PageBuilder needs enough heap space to store a
@@ -592,6 +593,13 @@ void PageBuilder::_handle(int code, WebServer& server) {
       for (auto& element : _elements) {
         String  contentBlock;
         size_t  blkSize = element.get().build(contentBlock, args);
+        if (_cancel)
+          return;
+        else if (firstOrder) {
+          server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+          server.send(code, "text/html", "");
+          firstOrder = false;
+        }
         server.sendContent_P(contentBlock.c_str());
         (void)(blkSize);
         PB_DBG("blk:%u\n", blkSize);
@@ -610,6 +618,13 @@ void PageBuilder::_handle(int code, WebServer& server) {
           PageElement&  pe = element.get();
           pe.rewind();
           size_t  blkSize = pe.build(bp, cBufferLen, args);
+          if (_cancel)
+            return;
+          else if (firstOrder) {
+            server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+            server.send(code, "text/html", "");
+            firstOrder = false;
+          }
           while (blkSize) {
             server.sendContent_P(cBuffer, blkSize);
             PB_DBG_DUMB("blk:%u ", blkSize);
