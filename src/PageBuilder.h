@@ -242,25 +242,13 @@ class PageBuilder : public RequestHandler {
     Identity      /**< Not suppoted */
   };
 
-  PageBuilder() : _elements(PageElementVT()), _method(HTTP_ANY), _noCache(false), _cancel(false), _enc(Auto) {}
-  explicit PageBuilder(PageElementVT elements, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = Auto) :
-    _elements(elements),
-    _method(method),
-    _noCache(noCache),
-    _cancel(cancel),
-    _enc(chunked) {}
-  PageBuilder(const char* uri, PageElementVT elements, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = Auto) :
-    _uri(String(uri)),
-    _elements(elements),
-    _method(HTTP_ANY),
-    _noCache(noCache),
-    _cancel(cancel),
-    _enc(chunked) {}
-  virtual ~PageBuilder() {}
-
   // The type of user-owned function for uploading.
   typedef std::function<void(const String&, const HTTPUpload&)> UploadFuncT;
 
+  PageBuilder();
+  explicit PageBuilder(PageElementVT elements, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = Auto);
+  PageBuilder(const char* uri, PageElementVT elements, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = Auto);
+  virtual ~PageBuilder() {}
   void  addElement(PageElement& element) { _elements.push_back(element); }
   void  atNotFound(WebServer& server);
   void  authentication(const char* username, const char* password, const HTTPAuthMethod scheme = HTTPAuthMethod::BASIC_AUTH, const char* realm = NULL, const String& authFail = String(""));
