@@ -215,8 +215,6 @@ class PageElement {
 
 // The type of user-owned function for preparing the handling of current URI.
 typedef std::function<bool(HTTPMethod, String)> PrepareFuncT;
-// The type of user-owned function for uploading.
-typedef std::function<void(const String&, const HTTPUpload&)> UploadFuncT;
 
 /**
  * The PageBuilder class treats multiple PageElements constituting an
@@ -259,6 +257,10 @@ class PageBuilder : public RequestHandler {
     _cancel(cancel),
     _enc(chunked) {}
   virtual ~PageBuilder() {}
+
+  // The type of user-owned function for uploading.
+  typedef std::function<void(const String&, const HTTPUpload&)> UploadFuncT;
+
   void  addElement(PageElement& element) { _elements.push_back(element); }
   void  atNotFound(WebServer& server);
   void  authentication(const char* username, const char* password, const HTTPAuthMethod scheme = HTTPAuthMethod::BASIC_AUTH, const char* realm = NULL, const String& authFail = String(""));
