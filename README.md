@@ -378,6 +378,7 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 #### [1.5.0] 2021-01-03
 - Improved memory management
 - Supports PROGMEM natively with PageElement
+- Supports nested PageElement token
 
 #### [1.4.2] 2020-05-28
 - Supports LittleFS on ESP8266.

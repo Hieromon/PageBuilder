@@ -190,7 +190,8 @@ class PageElement {
   typedef struct {
     PGM_P _p;                         /**< Position of the mold or token lexical during scanning */
     unsigned int  _s;                 /**< Read offset in the string replaced from the token */
-    std::shared_ptr<File> _file;
+    String  _fillin;                  /**< String with a token replaced */
+    std::shared_ptr<File> _file;      /**< File for file: mold */
     TokenSource::STORAGE_CLASS_t  _storage; /**< Distinct class of storage to be scanned */
   } _LexicalIndexST;
 
@@ -209,7 +210,6 @@ class PageElement {
   TokenSource::STORAGE_CLASS_t  _storage;     /**< Storage class of the mold */
   _LexicalIndexST               _raw;         /**< Position of lexical currently being scanned */
   std::stack<_LexicalIndexST>   _indexStack;  /**< Stack for the mold scanning position save */
-  String  _fillin;                    /**< Receiving actual string temporarily buffer */
   bool    _eoe;                       /**< The element has been read */
 };
 

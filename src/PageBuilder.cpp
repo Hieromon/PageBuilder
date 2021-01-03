@@ -206,8 +206,8 @@ char PageElement::_contextRead(PageArgument& args) {
               }
               if (exchanger) {
                 // Get token replacement string, extract into the content
-                _fillin = exchanger(args);
                 _indexStack.push(_raw);
+                _raw._fillin = exchanger(args);
                 _raw._storage = TokenSource::STORAGE_CLASS_t::STRING;
                 _raw._s = 0;
                 _raw._p = nullptr;
@@ -264,11 +264,11 @@ char PageElement::_read(void) {
   else if (_raw._storage == TokenSource::STORAGE_CLASS_t::TEXT)
     c = static_cast<char>(pgm_read_byte(_raw._p++));
   else if (_raw._storage == TokenSource::STORAGE_CLASS_t::STRING) {
-    if (_raw._s < _fillin.length())
-      c = _fillin[_raw._s++];
+    if (_raw._s < _raw._fillin.length())
+      c = _raw._fillin[_raw._s++];
     else
       // Forcibly release the fill string that has been read.
-      _fillin.~String();
+      _raw._fillin.~String();
   }
   else if (_raw._storage == TokenSource::STORAGE_CLASS_t::FILE) {
     if (!_raw._file) {
