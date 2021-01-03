@@ -409,9 +409,9 @@ void PageBuilder::atNotFound(WebServer& server) {
  * @param   autoFail  Message for fails with authentication
  */
 void PageBuilder::authentication(const char* username, const char* password, const HTTPAuthMethod scheme, const char* realm, const String& authFail) {
-  _username = String(username);
-  _password = String(password);
-  _realm = String(realm);
+  _username = username ? String(username) : String();
+  _password = password ? String(password) : String();
+  _realm = realm ? String(realm) : String();
   _fails = String(authFail);
   _auth = scheme;
 }
