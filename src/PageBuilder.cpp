@@ -568,7 +568,7 @@ bool PageBuilder::handle(WebServer& server, HTTPMethod requestMethod, String req
     return false;
 
   if (_username.length()) {
-    PB_DBG("auth:%s");
+    PB_DBG("auth:%s", _username.c_str());
     if (_password.length()) {
       PB_DBG_DUMB("/%s", _password.c_str());
     }
