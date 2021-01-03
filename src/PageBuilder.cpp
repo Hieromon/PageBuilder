@@ -426,7 +426,7 @@ size_t PageBuilder::build(String& content) {
 
   // Obtain requested arguments from the WebServer,
   // also reconstruct to pass the page handler.
-  if (!_server) {
+  if (_server) {
     for (uint8_t i = 0; i < _server->args(); i++)
       args.push(_server->argName(i), _server->arg(i));
   }
