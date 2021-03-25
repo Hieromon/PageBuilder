@@ -34,24 +34,32 @@
 #define WIFI_EVENT_AP_STADISCONNECTED SYSTEM_EVENT_AP_STADISCONNECTED
 #define WIFI_EVENT_ALL                SYSTEM_EVENT_MAX
 #endif
-#include "PageBuilder.h"
+#include <FS.h>
+#ifdef PB_USE_SPIFFS
+#include <SPIFFS.h>
+FS& FlashFile = SPIFFS;
+#else
+#if defined(ARDUINO_ARCH_ESP8266)
+#include <LittleFS.h>
+FS& FlashFile = LittleFS;
+#elif defined(ARDUINO_ARCH_ESP32)
+#if __has_include("LITTLEFS.h")
+#include <LITTLEFS.h>
+fs::LITTLEFSFS& FlashFile = LITTLEFS;
+#else
+#include <SPIFFS.h>
+FS& FlashFile = SPIFFS;
+#endif
+#endif
+#endif
+#include <PageBuilder.h>
 
 #define AP_NAME "esp-ap"
 #define AP_PASS "12345678"
 
 #if defined(ARDUINO_ARCH_ESP8266)
-#ifdef PB_USE_SPIFFS
-#include <FS.h>
-FS& FlashFile = SPIFFS;
-#else
-#include <LittleFS.h>
-FS& FlashFile = LittleFS;
-#endif
 ESP8266WebServer server;
 #elif defined(ARDUINO_ARCH_ESP32)
-#include <FS.h>
-#include <SPIFFS.h>
-fs::SPIFFSFS& FlashFile = SPIFFS;
 WebServer server;
 #endif
 

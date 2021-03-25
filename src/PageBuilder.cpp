@@ -3,25 +3,25 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.4.2
- *  @date   2020-05-25
+ *  @version    1.5.0
+ *  @date   2021-03-25
  *  @copyright  MIT license.
  */
 
 #include "PageBuilder.h"
 #include "PageStream.h"
-#if defined(ARDUINO_ARCH_ESP8266)
-#ifdef PB_USE_SPIFFS
 #include <FS.h>
+#ifdef PB_USE_SPIFFS
+#include <SPIFFS.h>
 namespace PageBuilderFS { FS& flash = SPIFFS; };
 #else
+#if defined(ARDUINO_ARCH_ESP8266)
 #include <LittleFS.h>
 namespace PageBuilderFS { FS& flash = LittleFS; };
-#endif
 #elif defined(ARDUINO_ARCH_ESP32)
-#include <FS.h>
-#include <SPIFFS.h>
-namespace PageBuilderFS { fs::SPIFFSFS& flash = SPIFFS; };
+#include <LITTLEFS.h>
+namespace PageBuilderFS { fs::LITTLEFSFS& flash = LITTLEFS; };
+#endif
 #endif
 
 // A maximum length of the content block to switch to chunked transfer.
