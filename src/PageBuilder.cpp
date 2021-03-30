@@ -4,12 +4,25 @@
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
  *  @version    1.5.0
- *  @date   2020-12-31
+ *  @date   2021-03-25
  *  @copyright  MIT license.
  */
 
 #include "PageBuilder.h"
 #include "PageStream.h"
+#include <FS.h>
+#ifdef PB_USE_SPIFFS
+#include <SPIFFS.h>
+namespace PageBuilderFS { FS& flash = SPIFFS; };
+#else
+#if defined(ARDUINO_ARCH_ESP8266)
+#include <LittleFS.h>
+namespace PageBuilderFS { FS& flash = LittleFS; };
+#elif defined(ARDUINO_ARCH_ESP32)
+#include <LITTLEFS.h>
+namespace PageBuilderFS { fs::LITTLEFSFS& flash = LITTLEFS; };
+#endif
+#endif
 
 // Allocate static null string
 const String PageArgument::_nullString = String();
