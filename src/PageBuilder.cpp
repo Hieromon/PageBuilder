@@ -10,19 +10,21 @@
 
 #include "PageBuilder.h"
 #include "PageStream.h"
-#include <FS.h>
 #ifdef PB_USE_SPIFFS
 #include <SPIFFS.h>
-namespace PageBuilderFS { FS& flash = SPIFFS; };
+#define PB_APPLIED_FILECLASS  FS
 #else
 #if defined(ARDUINO_ARCH_ESP8266)
 #include <LittleFS.h>
-namespace PageBuilderFS { FS& flash = LittleFS; };
+#define PB_APPLIED_FILECLASS  FS
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <LITTLEFS.h>
-namespace PageBuilderFS { fs::LITTLEFSFS& flash = LITTLEFS; };
+#define PB_APPLIED_FILECLASS  fs::LITTLEFSFS
 #endif
 #endif
+
+// Determining the valid file system currently configured
+namespace PageBuilderFS { PB_APPLIED_FILECLASS& flash = PB_APPLIED_FILESYSTEM; };
 
 // Allocate static null string
 const String PageArgument::_nullString = String();
@@ -33,9 +35,6 @@ const PageBuilder::_httpHeaderConstST  PageBuilder::_headersNocache[] PROGMEM = 
   { "Pragma", "nocache" },
   { "Expires", "-1" }
 };
-
-// Determining the valid file system currently configured
-namespace PageBuilderFS { FS& flash = PB_APPLIED_FILESYSTEM; };
 
 /**
  * get request argument value, specifies an i as index to get POST body.

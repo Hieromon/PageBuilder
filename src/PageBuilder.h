@@ -46,18 +46,15 @@ using WebServer = ESP8266WebServer;
 // #define PB_USE_SPIFFS
 
 // Determining the valid file system currently configured
-#if defined(ARDUINO_ARCH_ESP8266)
-#ifdef PB_USE_SPIFFS
 #include <FS.h>
+#ifdef PB_USE_SPIFFS
 #define PB_APPLIED_FILESYSTEM   SPIFFS
 #else
-#include <LittleFS.h>
+#if defined(ARDUINO_ARCH_ESP8266)
 #define PB_APPLIED_FILESYSTEM   LittleFS
-#endif
 #elif defined(ARDUINO_ARCH_ESP32)
-#include <FS.h>
-#include <SPIFFS.h>
-#define PB_APPLIED_FILESYSTEM   SPIFFS
+#define PB_APPLIED_FILESYSTEM   LITTLEFS
+#endif
 #endif
 
 // The length of one content block is predefined and determined at compilation.
