@@ -4,14 +4,17 @@
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
  *  @version    1.5.0
- *  @date   2021-03-25
+ *  @date   2021-05-10
  *  @copyright  MIT license.
  */
 
 #include "PageBuilder.h"
 #include "PageStream.h"
 #ifdef PB_USE_SPIFFS
+#include <FS.h>
+#if defined(ARDUINO_ARCH_ESP32)
 #include <SPIFFS.h>
+#endif
 #define PB_APPLIED_FILECLASS  FS
 #else
 #if defined(ARDUINO_ARCH_ESP8266)
@@ -545,33 +548,34 @@ size_t PageBuilder::_getApproxSize(void) const {
 bool PageBuilder::handle(WebServer& server, HTTPMethod requestMethod, String requestUri) {
 #ifdef PB_DEBUG
   const char* _httpMethod;
-  switch (requestMethod) {
-  case HTTP_ANY:
+  if (requestMethod == HTTP_ANY)
     _httpMethod = "ANY";
-    break;
-  case HTTP_GET:
-    _httpMethod = "GET";
-    break;
-  case HTTP_HEAD:
-    _httpMethod = "HEAD";
-    break;
-  case HTTP_POST:
-    _httpMethod = "POST";
-    break;
-  case HTTP_PUT:
-    _httpMethod = "PUT";
-    break;
-  case HTTP_PATCH:
-    _httpMethod = "PATCH";
-    break;
-  case HTTP_DELETE:
-    _httpMethod = "DELETE";
-    break;
-  case HTTP_OPTIONS:
-    _httpMethod = "OPTIONS";
-    break;
-  default:
-    _httpMethod = "?";
+  else {
+    switch (requestMethod) {
+    case HTTP_GET:
+      _httpMethod = "GET";
+      break;
+    case HTTP_HEAD:
+      _httpMethod = "HEAD";
+      break;
+    case HTTP_POST:
+      _httpMethod = "POST";
+      break;
+    case HTTP_PUT:
+      _httpMethod = "PUT";
+      break;
+    case HTTP_PATCH:
+      _httpMethod = "PATCH";
+      break;
+    case HTTP_DELETE:
+      _httpMethod = "DELETE";
+      break;
+    case HTTP_OPTIONS:
+      _httpMethod = "OPTIONS";
+      break;
+    default:
+      _httpMethod = "?";
+    }
   }
   PB_DBG("HTTP_%s %s\n", _httpMethod, requestUri.c_str());
 #endif

@@ -53,7 +53,12 @@ using WebServer = ESP8266WebServer;
 #if defined(ARDUINO_ARCH_ESP8266)
 #define PB_APPLIED_FILESYSTEM   LittleFS
 #elif defined(ARDUINO_ARCH_ESP32)
+#if __has_include("LITTLEFS.h")
 #define PB_APPLIED_FILESYSTEM   LITTLEFS
+#else
+#define PB_USE_SPIFFS
+#define PB_APPLIED_FILESYSTEM   SPIFFS
+#endif
 #endif
 #endif
 
