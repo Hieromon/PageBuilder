@@ -179,10 +179,10 @@ class PageBuilder : public RequestHandler {
   /** The type of user-owned function for uploading. */
   typedef std::function<void(const String&, const HTTPUpload&)> UploadFuncT;
 
-  virtual bool canHandle(HTTPMethod requestMethod, String requestUri) override;
-  virtual bool canUpload(String uri) override;
-  bool handle(WebServerClass& server, HTTPMethod requestMethod, String requestUri) override;
-  virtual void upload(WebServerClass& server, String requestUri, HTTPUpload& upload) override;
+  virtual bool canHandle(HTTPMethod requestMethod, const String& requestUri) override;
+  virtual bool canUpload(const String& uri) override;
+  bool handle(WebServerClass& server, HTTPMethod requestMethod, const String& requestUri) override;
+  virtual void upload(WebServerClass& server, const String& requestUri, HTTPUpload& upload) override;
 
   void setUri(const char* uri) { _uri = String(uri); }
   const char* uri() { return _uri.c_str(); }
