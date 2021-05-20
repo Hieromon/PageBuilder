@@ -1,5 +1,5 @@
 # PageBuilder - HTML assembly aid for ESP8266/ESP32 WebServer
-[![Build Status](https://travis-ci.org/Hieromon/PageBuilder.svg?branch=master)](https://travis-ci.org/Hieromon/PageBuilder)
+[![Build Status](https://travis-ci.com/Hieromon/PageBuilder.svg?branch=master)](https://travis-ci.com/Hieromon/PageBuilder)
 [![arduino-library-badge](https://www.ardu-badge.com/badge/PageBuilder.svg?)](https://www.ardu-badge.com/PageBuilder)
 [![License](https://img.shields.io/github/license/Hieromon/PageBuilder)](https://github.com/Hieromon/PageBuilder/blob/master/LICENSE)
 
@@ -370,6 +370,9 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 **PB_USE_SPIFFS** macro is valid only when the platform is ESP8266 and will be ignored with ESP32 arduino core. (at least until LittleFS is supported by the ESP32 arduino core)
 
 ## Change log
+
+#### [1.4.3] 2021-05-20
+- Supports ESP8266 arduino core 3.0.0.
 
 #### [1.4.2] 2020-05-28
 - Supports LittleFS on ESP8266.

@@ -2,8 +2,8 @@
  *  Declaration of PageBuilder class and accompanying PageElement, PageArgument class.
  *  @file PageBuilder.h
  *  @author hieromon@gmail.com
- *  @version  1.4.2
- *  @date 2020-05-25
+ *  @version  1.4.3
+ *  @date 2021-05-20
  *  @copyright  MIT license.
  */
 
@@ -16,6 +16,8 @@
 #include "WProgram.h"
 #endif
 
+#include <tuple>
+#include <type_traits>
 #include <functional>
 #include <vector>
 #include <memory>
@@ -143,6 +145,35 @@ typedef std::vector<std::reference_wrapper<PageElement>>  PageElementVT;
 typedef std::function<bool(HTTPMethod, String)> PrepareFuncT;
 
 /**
+ *  Provides a namespace that is local to PageBuilder's internal scope.
+ *  It has type qualifiers used by PageBuilder.*/
+namespace PageBuilderUtil {
+  // TypeOfArgument as a template
+  // Get the type of arguments from a member.
+  template<typename T>
+  struct TypeOfArgument;
+
+  template<typename T, typename U, typename... V>
+  struct TypeOfArgument<U(T::*)(V...)> {
+    template<size_t i>
+    struct arg {
+      typedef typename std::tuple_element<i, std::tuple<V...>>::type  type;
+    };
+  };
+
+  // Determines the type of the uri argument contained in the member function
+  // signature of the RequestHandler class. This redefinition procedure ensures
+  // backward compatibility with ESP8266 arduino core 3.0.0 and later.
+  // However, it relies solely on the canHandle member function as a criterion
+  // and lacks completeness.
+  using URI_TYPE_SIGNATURE = std::conditional<
+    std::is_lvalue_reference<TypeOfArgument<decltype(&RequestHandler::canHandle)>::arg<1>::type>::value,
+    const String&,
+    String
+  >::type;
+};
+
+/**
  *  PageBuilder class is to make easy to assemble and output html stream 
  *  of web page. The page builder class includes the uri of the page, 
  *  the PageElement indicating the HTML model constituting the page, and 
@@ -179,10 +210,10 @@ class PageBuilder : public RequestHandler {
   /** The type of user-owned function for uploading. */
   typedef std::function<void(const String&, const HTTPUpload&)> UploadFuncT;
 
-  virtual bool canHandle(HTTPMethod requestMethod, String requestUri) override;
-  virtual bool canUpload(String uri) override;
-  bool handle(WebServerClass& server, HTTPMethod requestMethod, String requestUri) override;
-  virtual void upload(WebServerClass& server, String requestUri, HTTPUpload& upload) override;
+  virtual bool canHandle(HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) override;
+  virtual bool canUpload(PageBuilderUtil::URI_TYPE_SIGNATURE uri) override;
+  bool handle(WebServerClass& server, HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) override;
+  virtual void upload(WebServerClass& server, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri, HTTPUpload& upload) override;
 
   void setUri(const char* uri) { _uri = String(uri); }
   const char* uri() { return _uri.c_str(); }

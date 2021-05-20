@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.4.2
- *  @date   2020-05-25
+ *  @version    1.4.3
+ *  @date   2021-05-20
  *  @copyright  MIT license.
  */
 
@@ -58,7 +58,7 @@ static const HTTPHeaderS    _HttpHeaderNocache[] PROGMEM = {
  *  @retval true    This page can handle this request.
  *  @retval false   This page does not correspond to this request. 
  */
-bool PageBuilder::canHandle(HTTPMethod requestMethod, String requestUri) {
+bool PageBuilder::canHandle(HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) {
     if (_canHandle) {
         return _canHandle(requestMethod, requestUri);
     }
@@ -79,7 +79,7 @@ bool PageBuilder::canHandle(HTTPMethod requestMethod, String requestUri) {
  *  @param  requestUri  The uri of this upload request.
  *  @retval false   This page cannot receive the upload request.
  */
-bool PageBuilder::canUpload(String uri) {
+bool PageBuilder::canUpload(PageBuilderUtil::URI_TYPE_SIGNATURE uri) {
     PB_DBG("%s upload request\n", uri.c_str());
     if (!_upload || !canHandle(HTTP_POST, uri))
         return false;
@@ -93,7 +93,7 @@ bool PageBuilder::canUpload(String uri) {
  *  @param  requestUri  Request uri of this time.
  *  @param  upload      A reference of the context of the HTTPUpload structure. 
  */
-void PageBuilder::upload(WebServerClass& server, String requestUri, HTTPUpload& upload) {
+void PageBuilder::upload(WebServerClass& server, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri, HTTPUpload& upload) {
     (void)server;
     if (canUpload(requestUri))
         _upload(requestUri, upload);
@@ -220,7 +220,7 @@ bool PageBuilder::_sink(int code, WebServerClass& server) { //, HTTPMethod reque
  *  @retval true    A response send.
  *  @retval false   This request could not handled.
  */
-bool PageBuilder::handle(WebServerClass& server, HTTPMethod requestMethod, String requestUri) {
+bool PageBuilder::handle(WebServerClass& server, HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) {
     // Screening the available request
     if (!canHandle(requestMethod, requestUri))
         return false;
