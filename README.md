@@ -371,6 +371,9 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 
 ## Change log
 
+#### [1.4.3] 2021-05-20
+- Supports ESP8266 arduino core 3.0.0.
+
 #### [1.4.2] 2020-05-28
 - Supports LittleFS on ESP8266.
 
