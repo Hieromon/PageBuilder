@@ -3,7 +3,7 @@
  * @file PageBuilder.h
  * @author hieromon@gmail.com
  * @version  1.5.0
- * @date 2020-12-31
+ * @date 2021-05-25
  * @copyright  MIT license.
  */
 
@@ -11,6 +11,8 @@
 #define _PAGEBUILDER_H_
 
 #include <Arduino.h>
+#include <tuple>
+#include <type_traits>
 #include <functional>
 #include <forward_list>
 #include <stack>
@@ -227,6 +229,35 @@ typedef std::function<bool(HTTPMethod, String)> PrepareFuncT;
 using PageElementVT = std::vector<std::reference_wrapper<PageElement>>;
 
 /**
+ *  Provides a namespace that is local to PageBuilder's internal scope.
+ *  It has type qualifiers used by PageBuilder.*/
+namespace PageBuilderUtil {
+  // TypeOfArgument as a template
+  // Get the type of arguments from a member.
+  template<typename T>
+  struct TypeOfArgument;
+
+  template<typename T, typename U, typename... V>
+  struct TypeOfArgument<U(T::*)(V...)> {
+    template<size_t i>
+    struct arg {
+      typedef typename std::tuple_element<i, std::tuple<V...>>::type  type;
+    };
+  };
+
+  // Determines the type of the uri argument contained in the member function
+  // signature of the RequestHandler class. This redefinition procedure ensures
+  // backward compatibility with ESP8266 arduino core 3.0.0 and later.
+  // However, it relies solely on the canHandle member function as a criterion
+  // and lacks completeness.
+  using URI_TYPE_SIGNATURE = std::conditional<
+    std::is_lvalue_reference<TypeOfArgument<decltype(&RequestHandler::canHandle)>::arg<1>::type>::value,
+    const String&,
+    String
+  >::type;
+};
+
+/**
  * HTML assembly aid.
  * It inherits from RequestHandler and meets the requirements of the
  * response handler for url access for the WebServer class.
@@ -257,18 +288,18 @@ class PageBuilder : public RequestHandler {
   size_t  build(String& content);
   size_t  build(String& content, PageArgument& args);
   void  cancel(const bool cancelation = true) { _cancel = cancelation; }
-  virtual bool  canHandle(HTTPMethod requestMethod, String requestUri) override;
-  virtual bool  canUpload(String uri) override;
+  virtual bool  canHandle(HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) override;
+  virtual bool  canUpload(PageBuilderUtil::URI_TYPE_SIGNATURE uri) override;
   void  clearElements(void);
   void  exitCanHandle(PrepareFuncT prepareFunc) { _canHandle = prepareFunc; }
-  bool  handle(WebServer& server, HTTPMethod requestMethod, String requestUri) override;
+  bool  handle(WebServer& server, HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) override;
   void  insert(WebServer& server) { server.addHandler(this); }
   virtual void  onUpload(UploadFuncT uploadFunc) { _upload = uploadFunc; }
   void  reserve(const size_t reserveSize) { _reserveSize = reserveSize; }
   void  setNoCache(const bool noCache) { _noCache = noCache; }
   void  setUri(const char* uri) { _uri = String(uri); }
   void  transferEncoding(const TransferEncoding_t encoding) { _enc = encoding; }
-  virtual void  upload(WebServer& server, String requestUri, HTTPUpload& upload) override;
+  virtual void  upload(WebServer& server, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri, HTTPUpload& upload) override;
   const char* uri(void) const { return _uri.c_str(); }
 
  protected:

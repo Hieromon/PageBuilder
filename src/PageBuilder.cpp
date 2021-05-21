@@ -4,7 +4,7 @@
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
  *  @version    1.5.0
- *  @date   2021-05-10
+ *  @date   2021-05-25
  *  @copyright  MIT license.
  */
 
@@ -490,7 +490,7 @@ size_t PageBuilder::build(String& content, PageArgument& args) {
  * @return  true  the PageBuilder can handle this request.
  * @return  false 
  */
-bool PageBuilder::canHandle(HTTPMethod requestMethod, String requestUri) {
+bool PageBuilder::canHandle(HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) {
   if (_canHandle)
     return _canHandle(requestMethod, requestUri);
   else {
@@ -508,7 +508,7 @@ bool PageBuilder::canHandle(HTTPMethod requestMethod, String requestUri) {
  * @return  true  The uploader will activate.
  * @return  false The uploader does not correspond to the requested URI.
  */
-bool PageBuilder::canUpload(String uri) {
+bool PageBuilder::canUpload(PageBuilderUtil::URI_TYPE_SIGNATURE uri) {
   PB_DBG("%s upload request\n", uri.c_str());
   if (!_upload || !canHandle(HTTP_POST, uri))
     return false;
@@ -545,7 +545,7 @@ size_t PageBuilder::_getApproxSize(void) const {
  * @return true   sent successfull
  * @return false  failed
  */
-bool PageBuilder::handle(WebServer& server, HTTPMethod requestMethod, String requestUri) {
+bool PageBuilder::handle(WebServer& server, HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) {
 #ifdef PB_DEBUG
   const char* _httpMethod;
   if (requestMethod == HTTP_ANY)
@@ -717,7 +717,7 @@ void PageBuilder::_handle(int code, WebServer& server) {
  * @param   requestUri  Uploading URI
  * @param   upload      The uploader
  */
-void PageBuilder::upload(WebServer& server, String requestUri, HTTPUpload& upload) {
+void PageBuilder::upload(WebServer& server, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri, HTTPUpload& upload) {
   (void)(server);
   if (canUpload(requestUri))
     _upload(requestUri, upload);
