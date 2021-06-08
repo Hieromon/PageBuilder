@@ -73,7 +73,7 @@ using WebServer = ESP8266WebServer;
 #  ifdef ARDUINO_ARCH_ESP32
 #    include <SPIFFS.h>
 #  endif
-#  define PB_APPLIED_FILECLASS      fs::SPIFFSFS
+#  define PB_APPLIED_FILECLASS      fs::FS
 #  define PB_APPLIED_FILESYSTEM     SPIFFS
 #elif PB_USE_FILESYSTEM == 2
 #  if defined(ARDUINO_ARCH_ESP8266)
