@@ -10,8 +10,8 @@
 #ifndef _PAGESTREAM_H_
 #define _PAGESTREAM_H_
 
+#include <WiFiClient.h>
 #include <Stream.h>
-#include "PageBuilder.h"
 
 /**
  * Implementation of a class with a Stream interface for sending the

@@ -10,7 +10,6 @@
 #ifndef _PAGEBUILDER_H_
 #define _PAGEBUILDER_H_
 
-#include <Arduino.h>
 #include <tuple>
 #include <type_traits>
 #include <functional>
@@ -42,26 +41,50 @@ using WebServer = ESP8266WebServer;
 #define PB_DBG(...) do {(void)0;} while (0)
 #endif // !PB_DEBUG
 
-// SPIFFS has deprecated on EP8266 core. This flag indicates that
-// the migration to LittleFS has not completed.
-// Uncomment the following PB_USE_SPIFFS to enable SPIFFS.
-// #define PB_USE_SPIFFS
+// The PB_USE_SPIFFS and PB_USE_LITTLEFS macros declare which filesystem
+// to apply. Their definitions are contradictory to each other and you
+// cannot activate both at the same time.
+//#define PB_USE_SPIFFS
+//#define PB_USE_LITTLEFS
+// Each platform supported by PageBuilder has a default file system,
+// which is LittleFS for ESP8266 and SPIFFS for ESP32. Neither PB_USE_SPIFFS
+// nor PB_USE_LITTLE_FS needs to be explicitly defined as long as you use
+// the default file system. The default file system for each platform is assumed.
+// SPIFFS has deprecated on EP8266 core. PB_USE_SPIFFS flag indicates
+// that the migration to LittleFS has not completed.
 
 // Determining the valid file system currently configured
-#include <FS.h>
-#ifdef PB_USE_SPIFFS
-#define PB_APPLIED_FILESYSTEM   SPIFFS
-#else
 #if defined(ARDUINO_ARCH_ESP8266)
-#define PB_APPLIED_FILESYSTEM   LittleFS
+#  define PB_DEFAULT_FILESYSTEM 2
 #elif defined(ARDUINO_ARCH_ESP32)
-#if __has_include("LITTLEFS.h")
-#define PB_APPLIED_FILESYSTEM   LITTLEFS
-#else
-#define PB_USE_SPIFFS
-#define PB_APPLIED_FILESYSTEM   SPIFFS
+#  define PB_DEFAULT_FILESYSTEM 1
 #endif
+
+#if !defined(PB_USE_SPIFFS) && !defined(PB_USE_LITTLEFS)
+#  define PB_USE_FILESYSTEM PB_DEFAULT_FILESYSTEM
+#elif defined(PB_USE_SPIFFS)
+#  define PB_USE_FILESYSTEM 1
+#elif defined(PB_USE_LITTLEFS)
+#  define PB_USE_FILESYSTEM 2
 #endif
+
+#if PB_USE_FILESYSTEM == 1
+#  include <FS.h>
+#  ifdef ARDUINO_ARCH_ESP32
+#    include <SPIFFS.h>
+#  endif
+#  define PB_APPLIED_FILECLASS      fs::SPIFFSFS
+#  define PB_APPLIED_FILESYSTEM     SPIFFS
+#elif PB_USE_FILESYSTEM == 2
+#  if defined(ARDUINO_ARCH_ESP8266)
+#    include <LittleFS.h>
+#    define PB_APPLIED_FILECLASS    fs::FS
+#    define PB_APPLIED_FILESYSTEM   LittleFS
+#  elif defined(ARDUINO_ARCH_ESP32)
+#    include <LITTLEFS.h>
+#    define PB_APPLIED_FILECLASS    fs::LITTLEFSFS
+#    define PB_APPLIED_FILESYSTEM   LITTLEFS
+#  endif
 #endif
 
 // The length of one content block is predefined and determined at compilation.
