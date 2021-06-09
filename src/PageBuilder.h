@@ -53,7 +53,12 @@ using WebServer = ESP8266WebServer;
 // SPIFFS has deprecated on EP8266 core. PB_USE_SPIFFS flag indicates
 // that the migration to LittleFS has not completed.
 
-// Determining the valid file system currently configured
+// Globally deploy the applicable file system classes and instances.
+// The type of the applicable file system to be used is switched
+// according to the AC_USE_SPIFFS and AC_USE_LITTLEFS definition.
+// The file system indicator to apply is expanded by the macro definition,
+// AUTOCONNECT_APPLIED_FILECLASS is assigned the class name,
+// and AUTOCONNECT_APPLIED_FILESYSTEM is assigned the global instance name.
 #if defined(ARDUINO_ARCH_ESP8266)
 #  define PB_DEFAULT_FILESYSTEM 2
 #elif defined(ARDUINO_ARCH_ESP32)
@@ -68,6 +73,11 @@ using WebServer = ESP8266WebServer;
 #  define PB_USE_FILESYSTEM 2
 #endif
 
+// Note: If LITTLEFS.h becomes Not Found in PlatformIO, try specifying
+// lib_ldf_mode=deep with platformio.ini. Due to the deep nesting by
+// preprocessor instructions, the include file cannot be detected by the
+// chain mode (nested include search) of PlatformIO's dependent library
+// search.
 #ifdef ARDUINO_ARCH_ESP8266
 #define PB_APPLIED_FILECLASS              fs::FS
 #endif
