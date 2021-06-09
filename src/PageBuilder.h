@@ -68,23 +68,25 @@ using WebServer = ESP8266WebServer;
 #  define PB_USE_FILESYSTEM 2
 #endif
 
+#ifdef ARDUINO_ARCH_ESP8266
+#define PB_APPLIED_FILECLASS              fs::FS
+#endif
 #if PB_USE_FILESYSTEM == 1
-#  include <FS.h>
-#  ifdef ARDUINO_ARCH_ESP32
-#    include <SPIFFS.h>
-#  endif
-#  define PB_APPLIED_FILECLASS      fs::FS
-#  define PB_APPLIED_FILESYSTEM     SPIFFS
+#   include <FS.h>
+#   define PB_APPLIED_FILESYSTEM          SPIFFS
+#   ifdef ARDUINO_ARCH_ESP32
+#       include <SPIFFS.h>
+#       define PB_APPLIED_FILECLASS       fs::SPIFFSFS
+#   endif
 #elif PB_USE_FILESYSTEM == 2
-#  if defined(ARDUINO_ARCH_ESP8266)
-#    include <LittleFS.h>
-#    define PB_APPLIED_FILECLASS    fs::FS
-#    define PB_APPLIED_FILESYSTEM   LittleFS
-#  elif defined(ARDUINO_ARCH_ESP32)
-#    include <LITTLEFS.h>
-#    define PB_APPLIED_FILECLASS    fs::LITTLEFSFS
-#    define PB_APPLIED_FILESYSTEM   LITTLEFS
-#  endif
+#   if defined(ARDUINO_ARCH_ESP8266)
+#       include <LittleFS.h>
+#       define PB_APPLIED_FILESYSTEM      LittleFS
+#   elif defined(ARDUINO_ARCH_ESP32)
+#       include <LITTLEFS.h>
+#    define PB_APPLIED_FILECLASS          fs::LITTLEFSFS
+#    define PB_APPLIED_FILESYSTEM         LITTLEFS
+#   endif
 #endif
 
 // The length of one content block is predefined and determined at compilation.
