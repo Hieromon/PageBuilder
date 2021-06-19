@@ -131,7 +131,7 @@ size_t PageElement::build(String& buffer, PageArgument& args) {
     rSize = (getApproxSize() + 32) & (~0xe0);
   buffer.clear();
   if (!buffer.reserve(rSize)) {
-    PB_DBG("Element reservation failed, free:%" PRIu32 "\n", ESP.getFreeHeap());
+    PB_DBG("Element reservation failed, free:%u\n", ESP.getFreeHeap());
   }
 
   rewind();                 // Reset the scanning position.
@@ -448,7 +448,7 @@ size_t PageBuilder::build(String& content, PageArgument& args) {
   size_t  rSize = _reserveSize;
   if (!rSize)
     rSize = _getApproxSize();
-  PB_DBG("Buf preserve:%d, Free heap:%" PRIu32 " ", rSize, ESP.getFreeHeap());
+  PB_DBG("Buf preserve:%u, Free heap:%u ", rSize, ESP.getFreeHeap());
   if (!content.reserve(rSize)) {
     PB_DBG_DUMB("\n");
     PB_DBG("Content preliminary allocation failed. ");
@@ -461,7 +461,7 @@ size_t PageBuilder::build(String& content, PageArgument& args) {
     String  elementBlock;
     cc += element.get().build(elementBlock, args);
     if (!content.concat(elementBlock)) {
-      PB_DBG("Content lost, len:%u free:%" PRIu32, elementBlock.length(), ESP.getFreeHeap());
+      PB_DBG("Content lost, len:%u free:%u", elementBlock.length(), ESP.getFreeHeap());
       break;
     }
   }
@@ -690,7 +690,7 @@ void PageBuilder::_handle(int code, WebServer& server) {
         PB_DBG_DUMB("\n");
       }
       else {
-        PB_DBG_DUMB("failed, free:%" PRIu32 "\n", ESP.getFreeHeap());
+        PB_DBG_DUMB("failed, free:%u\n", ESP.getFreeHeap());
       }
     }
     server.sendContent("");
