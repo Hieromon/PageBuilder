@@ -381,6 +381,10 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 - Supports LittleFS on ESP32.
 - Supports nested PageElement token
 
+##### Important note
+
+When building a sketch in the PlatformIO environment, a compile error may appear that says "File system header file not found". This error can be avoided by setting the library search mode (`lib_ldf_mode`) to the `deep` in with the `platformio.ini` file.
+
 #### [1.4.3] 2021-05-20
 - Supports ESP8266 arduino core 3.0.0.
 
