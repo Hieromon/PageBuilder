@@ -365,7 +365,7 @@ The function would be called twice at one http request. The cause is the interna
 
 ## Significant changes
 
-Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS. It is a measure to comply with the deprecation of SPIFFS by the core. However, SPIFFS is still available and defines the [**PB_USE_SPIFFS**](https://github.com/Hieromon/PageBuilder/blob/master/src/PageBuilder.h#L39) macro in [PageBuilder.h](https://github.com/Hieromon/PageBuilder/blob/master/src/PageBuilder.h) file to enable it as follows:
+Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS. It is a measure to comply with the deprecation of SPIFFS by the core. However, SPIFFS is still available and defines the [**PB_USE_SPIFFS**](https://github.com/Hieromon/PageBuilder/blob/master/src/PageBuilder.h#L47) macro in [PageBuilder.h](https://github.com/Hieromon/PageBuilder/blob/master/src/PageBuilder.h) file to enable it as follows:
 
 ```cpp
 #define PB_USE_SPIFFS
