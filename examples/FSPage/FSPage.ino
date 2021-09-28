@@ -1,3 +1,4 @@
+#include <Arduino.h>
 /*
   FSPage.ino - Example PageBuilder with HTML page stored SPIFFS
   Copyright (c) 2017 Hieromon Ikasamo. All rights reserved.
@@ -19,6 +20,7 @@
 #if defined(ARDUINO_ARCH_ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <LittleFS.h>
 #define WIFI_EVENT_STA_CONNECTED      WIFI_EVENT_STAMODE_CONNECTED
 #define WIFI_EVENT_STA_DISCONNECTED   WIFI_EVENT_STAMODE_DISCONNECTED
 #define WIFI_EVENT_AP_STACONNECTED    WIFI_EVENT_SOFTAPMODE_STACONNECTED
@@ -28,28 +30,19 @@
 #elif defined(ARDUINO_ARCH_ESP32)
 #include <WiFi.h>
 #include <WebServer.h>
+#include <FS.h>
+#if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR>=2
+#define WIFI_EVENT_STA_CONNECTED      ARDUINO_EVENT_WIFI_STA_CONNECTED
+#define WIFI_EVENT_STA_DISCONNECTED   ARDUINO_EVENT_WIFI_STA_DISCONNECTED
+#define WIFI_EVENT_AP_STACONNECTED    ARDUINO_EVENT_WIFI_AP_STACONNECTED
+#define WIFI_EVENT_AP_STADISCONNECTED ARDUINO_EVENT_WIFI_AP_STADISCONNECTED
+#define WIFI_EVENT_ALL                ARDUINO_EVENT_MAX
+#else
 #define WIFI_EVENT_STA_CONNECTED      SYSTEM_EVENT_STA_CONNECTED
 #define WIFI_EVENT_STA_DISCONNECTED   SYSTEM_EVENT_STA_DISCONNECTED
 #define WIFI_EVENT_AP_STACONNECTED    SYSTEM_EVENT_AP_STACONNECTED
 #define WIFI_EVENT_AP_STADISCONNECTED SYSTEM_EVENT_AP_STADISCONNECTED
 #define WIFI_EVENT_ALL                SYSTEM_EVENT_MAX
-#endif
-#include <FS.h>
-#ifdef PB_USE_SPIFFS
-#include <SPIFFS.h>
-FS& FlashFile = SPIFFS;
-#else
-#if defined(ARDUINO_ARCH_ESP8266)
-#include <LittleFS.h>
-FS& FlashFile = LittleFS;
-#elif defined(ARDUINO_ARCH_ESP32)
-#if __has_include("LITTLEFS.h")
-#include <LITTLEFS.h>
-fs::LITTLEFSFS& FlashFile = LITTLEFS;
-#else
-#include <SPIFFS.h>
-FS& FlashFile = SPIFFS;
-#endif
 #endif
 #endif
 #include <PageBuilder.h>
@@ -62,6 +55,7 @@ ESP8266WebServer server;
 #elif defined(ARDUINO_ARCH_ESP32)
 WebServer server;
 #endif
+PB_APPLIED_FILECLASS& FlashFile = PB_APPLIED_FILESYSTEM;
 
 bool    CONNECT_REQ;
 String  CONN_SSID;
