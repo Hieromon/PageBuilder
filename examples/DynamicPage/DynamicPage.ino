@@ -48,7 +48,7 @@ bool handleAcs(HTTPMethod method, String uri) {
     return true;
   } else {
     currentUri = uri;
-    page.clearElement();          // Discards the remains of PageElement.
+    page.clearElements();         // Discards the remains of PageElement.
     page.addElement(elm);         // Register PageElement for current access.
 
     Serial.println("Request:" + uri);
