@@ -1,5 +1,5 @@
 # PageBuilder - HTML assembly aid for ESP8266/ESP32 WebServer
-[![Build Status](https://travis-ci.com/Hieromon/PageBuilder.svg?branch=master)](https://travis-ci.com/Hieromon/PageBuilder)
+[![Build Status](https://app.travis-ci.com/Hieromon/PageBuilder.svg?branch=master)](https://app.travis-ci.com/Hieromon/PageBuilder)
 [![arduino-library-badge](https://www.ardu-badge.com/badge/PageBuilder.svg?)](https://www.ardu-badge.com/PageBuilder)
 [![License](https://img.shields.io/github/license/Hieromon/PageBuilder)](https://github.com/Hieromon/PageBuilder/blob/master/LICENSE)
 
