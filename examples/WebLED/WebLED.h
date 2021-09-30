@@ -1,3 +1,6 @@
+#ifndef LED_BUILTIN
+#define LED_BUILTIN	2
+#endif
 static const char _PNG_LED[] PROGMEM = {
 "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAAA8AXHiAAAQHUlEQVR"
 "4Xu2dC1RUxxnHF3ygIKIIiqiIgLwUAQFBUPCFCT7BqPhIWz1tba1Nc1Jjm5PTJibntOZhz0nSNqdJ"

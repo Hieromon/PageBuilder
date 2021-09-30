@@ -17,8 +17,7 @@ atNotFound	KEYWORD2
 authentication	KEYWORD2
 build	KEYWORD2
 cancel	KEYWORD2
-clearElement	KEYWORD2
-exit404	KEYWORD2
+clearElements	KEYWORD2
 exitCanHandle	KEYWORD2
 insert	KEYWORD2
 hasArg	KEYWORD2

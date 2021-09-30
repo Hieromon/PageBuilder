@@ -161,22 +161,22 @@ PageElement element("hello {{NAME}}.", {{"NAME", func}});
 ```
 An argument can be accessed with the following method of `PageArgument` class.
 
-#### `String PageArgument::arg(String name)`  
+#### `String PageArgument::arg(String name)`
 Returns the value of the parameter specified by `name`.
 
-#### `String PageArgument::arg(int i)`  
+#### `String PageArgument::arg(int i)`
 Returns the value of the parameter indexed `i`.
 
-#### `String PageArgument::argName(int i)`  
+#### `String PageArgument::argName(int i)`
 Returns parameter name of indexed i.
 
-#### `int PageArgument::args()`  
+#### `int PageArgument::args()`
 Get parameters count of the current http request.
 
-#### `size_t PageArgument::size()`  
+#### `size_t PageArgument::size()`
 Same as `args()`.
 
-#### `bool PageArgument::hasArg(String name)`  
+#### `bool PageArgument::hasArg(String name)`
 Returns whether the `name` parameter is specified in the current http request.
 
 ## Declare PageBuilder object and PageElement object
@@ -208,6 +208,8 @@ PageBuilder::PageBuilder(const char* uri, PageElementVT element, HTTPMethod meth
 PageElement::PageElement();
 PageElement::PageElement(const char* mold);
 PageElement::PageElement(const char* mold, TokenVT source);
+PageElement::PageElement(const __FlashStringHelper* mold);
+PageElement::PageElement(const __FlashStringHelper* mold, TokenVT source);
 ```
 - `mold` : A pointer to HTML model string(const char array, PROGMEM available).
 - `source` : Container of processable token and handler function. A **TokenVT** type is std::vector to the structure with the pair of *token* and *func*. It prepares with an initializer.  
@@ -233,11 +235,11 @@ PageElement::PageElement(const char* mold, TokenVT source);
 
 ### PageBuilder Methods
 
-#### `void PageBuilder::addElement(PageElement& element)`  
+#### `void PageBuilder::addElement(PageElement& element)`
 Add a new **PageElement** object to the container of **PageBuilder**. 
 - `element` : PageElement object.
 
-#### `void PageBuilder::atNotFound(ESP8266WebServer& server)`<br>`void PageBuilder::atNotFound(WebServer& server)`  
+#### `void PageBuilder::atNotFound(ESP8266WebServer& server)`<br>`void PageBuilder::atNotFound(WebServer& server)`
 Register **the not found page** to the ESP8266WebServer. It has the same effect as `onNotFound` method of `ESP8266WebServer`/`WebServer`. The page registered by `atNotFound` method is response with http code 404.  
 Note that only the most recently registered PageBuilder object is valid.  
 - `server` : A reference of ESP8266WebServer (in ESP8266 case) or WebServer (in ESP32 case) object to register the page.
@@ -245,7 +247,7 @@ Note that only the most recently registered PageBuilder object is valid.
 #### `String PageBuilder::build(void)`
 Returns the built html string from `const char* mold` that processed *token* by the user *function* of **TokenVT** which code as `{"token",function_name}`. The `build` method handles all *PageElement* objects that a *PageBuilder* contained.
 
-#### `void PageBuilder::cancel(void)`  
+#### `void PageBuilder::cancel(void)`
 Notify to **PageBuilder** that the generated HTML string should not be send.  
 **PageBuilder** internally sends generated HTML with http 200 when invoked as *RequestHandler* from *handleClient()*. If the sketch wants to respond only to http response without generating HTML, you need to stop automatic transmission using the cancel method. The following example responds 302 with keep-alive connection. This response does not contain content. So the *Token func* will have the following code.
 ```c++
@@ -272,10 +274,10 @@ The sketch sends an http response in the *Token func* then **PageBuilder** shoul
   }
 ```
 
-#### `void PageBuilder::clearElement(void)`  
+#### `void PageBuilder::clearElements(void)`
 Clear enrolled **PageElement** objects in the **PageBuilder**.
 
-#### `void PageBuilder::exitCanHandle(PrepareFuncT prepareFunc)`  
+#### `void PageBuilder::exitCanHandle(PrepareFuncT prepareFunc)`
 - `prepareFunc` : User function instead of canHandle. This user function would be invoked at all request received.  
 ```bool prepareFunc(HTTPMethod method, String uri);```  
   - `method` : Same as parameter of PageBuilder constructor, `HTTP_ANY`, `HTTP_GET`, `HTTP_POST`.  
@@ -284,20 +286,22 @@ Clear enrolled **PageElement** objects in the **PageBuilder**.
 
   **Important notes.** The prepareFunc specified by eixtCanHandled is called twice at one http request. See [Application hints](#application-hints) for details.
 
-#### `void PageBuilder::insert(ESP8266WebServer& server)`<br>`void PageBuilder::insert(WebServer& server)`  
+#### `void PageBuilder::insert(ESP8266WebServer& server)`<br>`void PageBuilder::insert(WebServer& server)`
 Register the page and starts handling. It has the same effect as `on` method of `ESP8266WebServer` (in ESP8266 case)/`WebServer` (in ESP32 case).
 - `server` : A reference of the ESP8266WebServer or the WebServer object to register the page.
 
-#### `void PageBuilder::setUri(const char* uri)`  
+#### `void PageBuilder::setUri(const char* uri)`
 Set URI of this page.
 - `uri` : A pointer of URI string.
 
-#### `const char* PageBuilder::uri()`  
+#### `const char* PageBuilder::uri()`
 Get URI of this page.
 
-#### `void PageBuilder::chunked(const TransferEncoding_t chunked)`
-Set Transfer-Encoding with chunked, or not.
-- `chunked` : Enumeration type for the transfer-encoding.
+#### `void PageBuilder::transferEncoding(const PageBuilder::TransferEncoding_t encoding)`
+Set Transfer-Encoding with chunked, or not. TransferEncoding_t is the enumeration type for the transfer-encoding as following:
+- `Auto` : Automatically switch to chunk transmission according to the length of the content.
+- `ByteStream` : Chunked transmission, no use the String buffer like stream output.
+- `Chunked` : Chunked transfer encoding.
 
 #### `void PageBuilder::reserve(size_t size)`
 Set buffer size for reserved content building buffer.
@@ -313,16 +317,16 @@ Enable authentication when the page is accessed. It can take either DIGEST or BA
 
 ### PageElement methods
 
-#### `const char* PageElement::mold()`  
+#### `const char* PageElement::mold()`
 Get mold string in the PageElement.
 
-#### `String PageElement::build()`  
-Returns the HTML element string from `const char* mold` that processed *token* by the user *function* of **TokenVT**.
+#### `void PageElement::build(String& buffer)`
+Build the HTML element string from `const char* mold` that processed *token* by the user *function* of **TokenVT**.
 
-#### `void PageElement::setMold(const char* mold)`  
+#### `void PageElement::setMold(const char* mold)`<br>`void PageElement::setMold(const __FlashStringHelper* mold)`
 Sets the source HTML element string.
 
-#### `void PageElement::addToken(String token, HandleFuncT handler)`  
+#### `void PageElement::addToken(const char* token, HandleFuncT handler)`<br>`void PageElement::addToken(const __FlashStringHelper* token, HandlerFuncT handler)`
 Add the source HTML element string.
 
 ## Application hints<br>to reducing the memory for the HTML source
@@ -335,10 +339,10 @@ By using **setMold** and **addToken** method of the PegeElement class, the sketc
 
 In the first place, the request handler described in the **ESP8266WerbServer::on** (or **WebServer::on**) method would be registered as the *RequestHandler* class. The *RequestHandler* has the **canHandle** method which purpose is to determine if the handler corresponds to the requested URI. **ESP8266WebServer::handleClient** (or **WebServer::handleClient**) method uses the **canHandle** method of the *RequestHandler* class for each URI request to determine the handler which should be invoked in all registered handlers. Which means that the **canHandle** method is the first called, and the **PageBuilder** has the hook way for the this.
 
-### Handling by a single PageBuilder object for all URI requests.  
+### Handling by a single PageBuilder object for all URI requests.
 Using that hook way the sketch can aggregate all URI requests into a single PageBuilder object. The **exitCanHandle** method of PageBuilder specifies the user function to be called which is instead of the **canHandle** method. That user function overrides the canHandle method.  
 
-### The function by exitCanHandle.  
+### The function by exitCanHandle.
 Declaration of the function.
 ```c++
 bool func(HTTPMethod method, String uri);
@@ -356,12 +360,12 @@ d. Action to ignore if the same URI of an already generated page is requested.
 
 The function would be called twice at one http request. The cause is the internal logic of ESP8266WebServer (Relating to URI handler detection and URL parameter parsing), so the function specified by exitCanHandle needs to ignore the second call.
 
-### An example using this way.  
+### An example using this way.
 [DynamicPage.ino](examples/DynamicPage/DynamicPage.ino)
 
 ## Significant changes
 
-Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS. It is a measure to comply with the deprecation of SPIFFS by the core. However, SPIFFS is still available and defines the [**PB_USE_SPIFFS**](https://github.com/Hieromon/PageBuilder/blob/master/src/PageBuilder.h#L39) macro in [PageBuilder.h](https://github.com/Hieromon/PageBuilder/blob/master/src/PageBuilder.h) file to enable it as follows:
+Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS. It is a measure to comply with the deprecation of SPIFFS by the core. However, SPIFFS is still available and defines the [**PB_USE_SPIFFS**](https://github.com/Hieromon/PageBuilder/blob/master/src/PageBuilder.h#L47) macro in [PageBuilder.h](https://github.com/Hieromon/PageBuilder/blob/master/src/PageBuilder.h) file to enable it as follows:
 
 ```cpp
 #define PB_USE_SPIFFS
@@ -370,6 +374,17 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 **PB_USE_SPIFFS** macro is valid only when the platform is ESP8266 and will be ignored with ESP32 arduino core. (at least until LittleFS is supported by the ESP32 arduino core)
 
 ## Change log
+
+#### [1.5.0] 2021-05-25
+- Improved memory management
+- Supports PROGMEM natively with PageElement
+- Supports LittleFS on ESP32.
+- Supports nested PageElement token
+
+##### Important note
+
+1. When building a sketch in the PlatformIO environment, a compile error may appear that says "File system header file not found". This error can be avoided by setting the library search mode (`lib_ldf_mode`) to the `deep` in with the `platformio.ini` file.
+2. The function name for the `clearElement` has changed to the `clearElements` from this version. 
 
 #### [1.4.3] 2021-05-20
 - Supports ESP8266 arduino core 3.0.0.
