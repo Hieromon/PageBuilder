@@ -78,6 +78,7 @@ bool handleAcs(HTTPMethod method, String uri) {
     else {
       return false;    // Not found to accessing exception URI.
     }
+    currentUri = String("");
   }
 }
 
