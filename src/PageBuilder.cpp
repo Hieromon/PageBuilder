@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.5.0
- *  @date   2021-05-25
+ *  @version    1.5.1
+ *  @date   2021-11-14
  *  @copyright  MIT license.
  */
 
@@ -620,9 +620,15 @@ void PageBuilder::_handle(int code, WebServer& server) {
     build(contentBlock, args);
     if (!_cancel) {
       if (contentBlock.length() > PAGEBUILDER_CONTENTBLOCK_SIZE) {
+        char  wrBuf[PAGEBUILDER_CONTENTBLOCK_SIZE];
         WiFiClient  client = server.client();
         PageStream  content(contentBlock, client);
-        server.streamFile(content, F("text/html"));
+        server.setContentLength(contentBlock.length());
+        server.send(200, "text/html", "");
+        while (content.available() > 0) {
+          size_t  nRd = content.readBytes(wrBuf, sizeof(wrBuf));
+          client.write(wrBuf, nRd);
+        }
       }
       else
         server.send(code, "text/html", contentBlock);
