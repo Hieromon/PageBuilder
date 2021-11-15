@@ -377,6 +377,9 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 
 ## Change log
 
+#### [1.5.1] 2021-11-14
+- Fixed that the content exceeding PAGEBUILDER_CONTENTBLOCK_SIZE is not output.
+
 #### [1.5.0] 2021-05-25
 - Improved memory management
 - Supports PROGMEM natively with PageElement
