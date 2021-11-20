@@ -55,7 +55,7 @@ bool handleAcs(HTTPMethod method, String uri) {
 
     if (uri == "/") {             // for the / page
       page.setUri(uri.c_str());
-      elm.setMold(PSTR(
+      elm.setMold(F(
         "<html>"
         "<body>"
         "<h2>{{ROOT}}</h2>"
@@ -66,7 +66,7 @@ bool handleAcs(HTTPMethod method, String uri) {
     }
     else if (uri == "/hello") {   // for the /hello page
       page.setUri(uri.c_str());
-      elm.setMold(PSTR(
+      elm.setMold(F(
         "<html>"
         "<body>"
         "<p style=\"color:Tomato;\">{{HELLO}}</p>"
