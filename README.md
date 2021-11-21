@@ -377,6 +377,9 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 
 ## Change log
 
+#### [1.5.2] 2021-11-21
+- Fixed incorrect declaration for Flash string.
+
 #### [1.5.1] 2021-11-14
 - Fixed that the content exceeding PAGEBUILDER_CONTENTBLOCK_SIZE is not output.
 
