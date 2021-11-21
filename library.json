@@ -13,5 +13,7 @@
     "espressif8266",
     "espressif32"
   ],
-  "version": "1.5.1"
+  "version": "1.5.2",
+  "license": "MIT",
+  "headers": "PageBuilder.h"
 }
