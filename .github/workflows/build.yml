@@ -2,10 +2,13 @@ name: PageBuilder library examples build CI
 
 on:
   - pull_request_target:
-      types: opened
-      branches: 'master/**'
+      types:
+        - opened
+      branches:
+        - 'master/**'
   - release:
-      types: published
+      types:
+        - published
   - repository_dispatch:
   - workflow_dispatch:
 
