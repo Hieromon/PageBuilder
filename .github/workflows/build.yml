@@ -54,7 +54,7 @@ jobs:
         uses: arduino/compile-sketches@v1
         with:
           fqbn: ${{ matrix.board.fqbn }}
-          platforms: ${{ matrix.board.platforms }}
+          platforms: ${{ matrix.platforms }}
           enable-deltas-report: true
           sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
           sketch-paths: |
