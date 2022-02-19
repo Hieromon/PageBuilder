@@ -1,4 +1,4 @@
-name: PageBuilder library examples build CI
+name: build
 
 on:
   pull_request_target:
