@@ -2,8 +2,8 @@
  * Declaration of PageBuilder class and accompanying PageElement, PageArgument class.
  * @file PageBuilder.h
  * @author hieromon@gmail.com
- * @version  1.5.0
- * @date 2021-09-06
+ * @version  1.5.3
+ * @date 2022-03-02
  * @copyright  MIT license.
  */
 
@@ -93,6 +93,15 @@ using WebServer = ESP8266WebServer;
 #define PB_APPLIED_FILESYSTEM             LittleFS
 #ifdef ARDUINO_ARCH_ESP32
 #define PB_APPLIED_FILECLASS              fs::LittleFSFS
+
+// With ESP32 platform core version less 2.0, reverts the LittleFS class and
+// the exported instance to the ordinary LittleFS_esp32 library owns.
+#if !defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR<2
+#undef PB_APPLIED_FILESYSTEM
+#define PB_APPLIED_FILESYSTEM             LITTLEFS
+#undef PB_APPLIED_FILECLASS
+#define PB_APPLIED_FILECLASS              fs::LITTLEFSFS
+#endif
 #endif
 #endif
 

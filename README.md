@@ -377,6 +377,10 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 
 ## Change log
 
+#### [1.5.3] 2022-03-02
+- Supports [LittleFS_esp32](https://github.com/lorol/LITTLEFS) legacy library with ESP32 Arduino core 1.0.6 or less.
+- Migrate the CI platform to GitHub actions.
+
 #### [1.5.2] 2021-11-21
 - Fixed incorrect declaration for Flash string.
 
