@@ -46,7 +46,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install ESP32 platform dependencies
         if: matrix.board.platform-name == 'esp32:esp32'
