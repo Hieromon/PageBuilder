@@ -1,8 +1,9 @@
 # PageBuilder - HTML assembly aid for ESP8266/ESP32 WebServer
 
 [![GitHub release](https://img.shields.io/github/v/release/Hieromon/PageBuilder)](https://github.com/Hieromon/PageBuilder/releases)
-[![arduino-library-badge](https://www.ardu-badge.com/badge/PageBuilder.svg?)](https://www.ardu-badge.com/PageBuilder)
 [![Build Status](https://github.com/Hieromon/PageBuilder/actions/workflows/build.yml/badge.svg)](https://github.com/Hieromon/PageBuilder/actions/workflows/build.yml)
+[![arduino-library-badge](https://www.ardu-badge.com/badge/PageBuilder.svg?)](https://www.ardu-badge.com/PageBuilder)
+[![PlatformIO Registry](https://badges.registry.platformio.org/packages/hieromon/library/PageBuilder.svg?version=1.5.4)](https://registry.platformio.org/packages/libraries/hieromon/PageBuilder?version=1.5.4) 
 [![License](https://img.shields.io/github/license/Hieromon/PageBuilder)](https://github.com/Hieromon/PageBuilder/blob/master/LICENSE)
 
 *An arduino library to create html string in the sketch for ESP8266/ESP32 WebServer.* 
@@ -192,8 +193,8 @@ Returns whether the `name` parameter is specified in the current http request.
 #### PageBuilder constructor
 ```c++
 PageBuilder::PageBuilder();
-PageBuilder::PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY, TransferEncoding_t chunked = PB_Auto);
-PageBuilder::PageBuilder(const char* uri, PageElementVT element, HTTPMethod method = HTTP_ANY, TransferEncoding_t chunked = PB_Auto);
+PageBuilder::PageBuilder(PageElementVT element, HTTPMethod method = HTTP_ANY, TransferEncoding_t chunked = PB_Auto, bool CORS = false);
+PageBuilder::PageBuilder(const char* uri, PageElementVT element, HTTPMethod method = HTTP_ANY, TransferEncoding_t chunked = PB_Auto, bool CORS = false);
 ```
 - `element` : **PageElement** container wrapper. Normally, use the brackets to specify initializer.  
   ```c++
@@ -204,6 +205,7 @@ PageBuilder::PageBuilder(const char* uri, PageElementVT element, HTTPMethod meth
 - `method` : Enum value of HTTP method as `HTTP_ANY`, `HTTP_GET`, `HTTP_POST` that page should respond.
 - `uri` : A URI string of the page.
 - `chunked` : Enumeration type for the transfer-encoding as TransferEncoding_t type. `PB_Auto`, `PB_ByteStream`, `PB_Chunk` can be specified. If `PB_Auto` is specified, would be determined automatically to switch them the chunk. Its criteria is defined with `MAX_CONTENTBLOCK_SIZE` macro in `PageBuilder.cpp` code. If `PB_ByteStream` is specified, PageBuilder will determine the way of sending either String writing or byte stream according to a size of the content.
+- `CORS` : Include a header allowing cross-origin access in the current page response.
 
 #### PageElement constructor
 ```c++
@@ -278,6 +280,9 @@ The sketch sends an http response in the *Token func* then **PageBuilder** shoul
 
 #### `void PageBuilder::clearElements(void)`
 Clear enrolled **PageElement** objects in the **PageBuilder**.
+
+#### `void PageBuilder::enableCORS(const bool CORS)`
+Include a header allowing [Cross-Origin](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) access in the current page response.
 
 #### `void PageBuilder::exitCanHandle(PrepareFuncT prepareFunc)`
 - `prepareFunc` : User function instead of canHandle. This user function would be invoked at all request received.  
@@ -376,6 +381,9 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 **PB_USE_SPIFFS** macro is valid only when the platform is ESP8266 and will be ignored with ESP32 arduino core. (at least until LittleFS is supported by the ESP32 arduino core)
 
 ## Change log
+
+#### [1.5.4] 2022-12-26
+- Supports an http response to allow CORS.
 
 #### [1.5.3] 2022-03-02
 - Supports [LittleFS_esp32](https://github.com/lorol/LITTLEFS) legacy library with ESP32 Arduino core 1.0.6 or less.

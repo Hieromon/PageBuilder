@@ -2,8 +2,8 @@
  * Declaration of PageBuilder class and accompanying PageElement, PageArgument class.
  * @file PageBuilder.h
  * @author hieromon@gmail.com
- * @version  1.5.3
- * @date 2022-03-02
+ * @version  1.5.4
+ * @date 2022-12-01
  * @copyright  MIT license.
  */
 
@@ -320,8 +320,8 @@ class PageBuilder : public RequestHandler {
   typedef std::function<void(const String&, const HTTPUpload&)> UploadFuncT;
 
   PageBuilder();
-  explicit PageBuilder(PageElementVT elements, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = Auto);
-  PageBuilder(const char* uri, PageElementVT elements, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = Auto);
+  explicit PageBuilder(PageElementVT elements, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = Auto, bool CORS = false);
+  PageBuilder(const char* uri, PageElementVT elements, HTTPMethod method = HTTP_ANY, bool noCache = true, bool cancel = false, TransferEncoding_t chunked = Auto, bool CORS = false);
   virtual ~PageBuilder() {}
   void  addElement(PageElement& element) { _elements.push_back(element); }
   void  atNotFound(WebServer& server);
@@ -332,6 +332,7 @@ class PageBuilder : public RequestHandler {
   virtual bool  canHandle(HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) override;
   virtual bool  canUpload(PageBuilderUtil::URI_TYPE_SIGNATURE uri) override;
   void  clearElements(void);
+  void  enableCORS(const bool CORS) { _cors = CORS; }
   void  exitCanHandle(PrepareFuncT prepareFunc) { _canHandle = prepareFunc; }
   bool  handle(WebServer& server, HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) override;
   void  insert(WebServer& server) { server.addHandler(this); }
@@ -348,6 +349,7 @@ class PageBuilder : public RequestHandler {
   PageElementVT _elements;            /**< Array of PageElements */
   HTTPMethod    _method;              /**< Requested HTTP method */
   UploadFuncT   _upload;              /**< Upload handler */
+  bool          _cors;                /**< Allow cross-origin */
 
  private:
   size_t  _getApproxSize(void) const; /**< Calculate an approximate generating size o the HTML */
