@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.5.4
- *  @date   2022-12-01
+ *  @version    1.5.5
+ *  @date   2023-01-05
  *  @copyright  MIT license.
  */
 
@@ -685,8 +685,10 @@ void PageBuilder::_handle(int code, WebServer& server) {
           PageElement&  pe = element.get();
           pe.rewind();
           size_t  blkSize = pe.build(bp, cBufferLen, args);
-          if (_cancel)
+          if (_cancel) {
+            free(cBuffer);
             return;
+          }
           else if (firstOrder) {
             server.setContentLength(CONTENT_LENGTH_UNKNOWN);
             server.send(code, "text/html", "");
