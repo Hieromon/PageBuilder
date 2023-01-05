@@ -3,7 +3,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/Hieromon/PageBuilder)](https://github.com/Hieromon/PageBuilder/releases)
 [![Build Status](https://github.com/Hieromon/PageBuilder/actions/workflows/build.yml/badge.svg)](https://github.com/Hieromon/PageBuilder/actions/workflows/build.yml)
 [![arduino-library-badge](https://www.ardu-badge.com/badge/PageBuilder.svg?)](https://www.ardu-badge.com/PageBuilder)
-[![PlatformIO Registry](https://badges.registry.platformio.org/packages/hieromon/library/PageBuilder.svg?version=1.5.4)](https://registry.platformio.org/packages/libraries/hieromon/PageBuilder?version=1.5.4) 
+[![PlatformIO Registry](https://badges.registry.platformio.org/packages/hieromon/library/PageBuilder.svg?version=1.5.5)](https://registry.platformio.org/packages/libraries/hieromon/PageBuilder?version=1.5.5) 
 [![License](https://img.shields.io/github/license/Hieromon/PageBuilder)](https://github.com/Hieromon/PageBuilder/blob/master/LICENSE)
 
 *An arduino library to create html string in the sketch for ESP8266/ESP32 WebServer.* 
@@ -382,6 +382,9 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 
 ## Change log
 
+#### [1.5.5] 2023-01-05
+- Fixed memory leak on cancel sending response.
+
 #### [1.5.4] 2022-12-26
 - Supports an http response to allow CORS.
 
@@ -484,4 +487,4 @@ A stable version of [arduino-esp32 core](https://github.com/espressif/arduino-es
 ## License
 
 The PseudoPWM class is licensed under the [MIT License](LICENSE.md).  
-Copyright &copy; 2018-2019 hieromon@gmail.com
+Copyright &copy; 2018-2023 hieromon@gmail.com
