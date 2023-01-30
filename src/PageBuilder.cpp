@@ -3,8 +3,8 @@
  *  PageElement.
  *  @file   PageBuilder.cpp
  *  @author hieromon@gmail.com
- *  @version    1.5.5
- *  @date   2023-01-05
+ *  @version    1.5.6
+ *  @date   2023-01-30
  *  @copyright  MIT license.
  */
 
@@ -506,14 +506,6 @@ bool PageBuilder::canUpload(PageBuilderUtil::URI_TYPE_SIGNATURE uri) {
 }
 
 /**
- * Clear the registered PageElements.
- */
-void PageBuilder::clearElements(void) {
-  _elements.clear();
-  PageElementVT().swap(_elements);
-}
-
-/**
  * Calculates the approximate content size,
  * not including token replacement.
  * @return  Size of the generating content.
@@ -670,6 +662,7 @@ void PageBuilder::_handle(int code, WebServer& server) {
         server.sendContent_P(contentBlock.c_str());
         (void)(blkSize);
         PB_DBG("blk:%u\n", blkSize);
+        server.client().flush();
       }
     }
     else {
@@ -703,6 +696,7 @@ void PageBuilder::_handle(int code, WebServer& server) {
               bp = cBuffer;
               cBufferLen = PAGEBUILDER_CONTENTBLOCK_SIZE;
             }
+            server.client().flush();
             blkSize = pe.build(bp, cBufferLen, args);
           }
         }
