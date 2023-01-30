@@ -3,7 +3,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/Hieromon/PageBuilder)](https://github.com/Hieromon/PageBuilder/releases)
 [![Build Status](https://github.com/Hieromon/PageBuilder/actions/workflows/build.yml/badge.svg)](https://github.com/Hieromon/PageBuilder/actions/workflows/build.yml)
 [![arduino-library-badge](https://www.ardu-badge.com/badge/PageBuilder.svg?)](https://www.ardu-badge.com/PageBuilder)
-[![PlatformIO Registry](https://badges.registry.platformio.org/packages/hieromon/library/PageBuilder.svg?version=1.5.5)](https://registry.platformio.org/packages/libraries/hieromon/PageBuilder?version=1.5.5) 
+[![PlatformIO Registry](https://badges.registry.platformio.org/packages/hieromon/library/PageBuilder.svg?version=1.5.6)](https://registry.platformio.org/packages/libraries/hieromon/PageBuilder?version=1.5.6) 
 [![License](https://img.shields.io/github/license/Hieromon/PageBuilder)](https://github.com/Hieromon/PageBuilder/blob/master/LICENSE)
 
 *An arduino library to create html string in the sketch for ESP8266/ESP32 WebServer.* 
