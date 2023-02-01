@@ -3,7 +3,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/Hieromon/PageBuilder)](https://github.com/Hieromon/PageBuilder/releases)
 [![Build Status](https://github.com/Hieromon/PageBuilder/actions/workflows/build.yml/badge.svg)](https://github.com/Hieromon/PageBuilder/actions/workflows/build.yml)
 [![arduino-library-badge](https://www.ardu-badge.com/badge/PageBuilder.svg?)](https://www.ardu-badge.com/PageBuilder)
-[![PlatformIO Registry](https://badges.registry.platformio.org/packages/hieromon/library/PageBuilder.svg?version=1.5.5)](https://registry.platformio.org/packages/libraries/hieromon/PageBuilder?version=1.5.5) 
+[![PlatformIO Registry](https://badges.registry.platformio.org/packages/hieromon/library/PageBuilder.svg?version=1.5.6)](https://registry.platformio.org/packages/libraries/hieromon/PageBuilder?version=1.5.6) 
 [![License](https://img.shields.io/github/license/Hieromon/PageBuilder)](https://github.com/Hieromon/PageBuilder/blob/master/LICENSE)
 
 *An arduino library to create html string in the sketch for ESP8266/ESP32 WebServer.* 
@@ -381,6 +381,9 @@ Since PageBuilder 1.4.2, the default file system has changed SPIFFS to LittleFS.
 **PB_USE_SPIFFS** macro is valid only when the platform is ESP8266 and will be ignored with ESP32 arduino core. (at least until LittleFS is supported by the ESP32 arduino core)
 
 ## Change log
+
+#### [1.5.6] 2023-01-30
+- In ESP8266 core 3.1.0 or later, the default segment length of the chunked encoding has been reduced from 1270 bytes to 510. This measure is to address the situation where ESP8266 core v3.1.0 or later is prone to running out of memory. The default segment length for chunked encoding is defined by the `PAGEBUILDER_CONTENTBLOCK_SIZE` macro in `PageBuilder.h` header file.
 
 #### [1.5.5] 2023-01-05
 - Fixed memory leak on cancel sending response.

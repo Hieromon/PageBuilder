@@ -2,8 +2,8 @@
  * Declaration of PageBuilder class and accompanying PageElement, PageArgument class.
  * @file PageBuilder.h
  * @author hieromon@gmail.com
- * @version  1.5.4
- * @date 2022-12-01
+ * @version  1.5.6
+ * @date 2023-01-30
  * @copyright  MIT license.
  */
 
@@ -111,6 +111,12 @@ using WebServer = ESP8266WebServer;
 // with chunks.
 #ifndef PAGEBUILDER_CONTENTBLOCK_SIZE
 #define PAGEBUILDER_CONTENTBLOCK_SIZE     1270
+#if defined(ARDUINO_ESP8266_MAJOR) && defined(ARDUINO_ESP8266_MINOR) && defined(ARDUINO_ESP8266_REVISION)
+#if ARDUINO_ESP8266_MAJOR >= 3 && ARDUINO_ESP8266_MINOR >= 1 && ARDUINO_ESP8266_REVISION >= 0
+#undef  PAGEBUILDER_CONTENTBLOCK_SIZE
+#define PAGEBUILDER_CONTENTBLOCK_SIZE     510
+#endif
+#endif
 #endif
 
 // Delimiter character to appear the token in the page element
@@ -331,7 +337,7 @@ class PageBuilder : public RequestHandler {
   void  cancel(const bool cancelation = true) { _cancel = cancelation; }
   virtual bool  canHandle(HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) override;
   virtual bool  canUpload(PageBuilderUtil::URI_TYPE_SIGNATURE uri) override;
-  void  clearElements(void);
+  void  clearElements(void) { _elements.clear(); }
   void  enableCORS(const bool CORS) { _cors = CORS; }
   void  exitCanHandle(PrepareFuncT prepareFunc) { _canHandle = prepareFunc; }
   bool  handle(WebServer& server, HTTPMethod requestMethod, PageBuilderUtil::URI_TYPE_SIGNATURE requestUri) override;
