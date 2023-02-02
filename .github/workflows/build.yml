@@ -55,7 +55,7 @@ jobs:
       - name: Compile all examples
         uses: arduino/compile-sketches@v1
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           fqbn: ${{ matrix.board.fqbn }}
           platforms: ${{ matrix.platforms }}
           enable-deltas-report: true
